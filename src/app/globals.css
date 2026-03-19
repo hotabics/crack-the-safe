@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --vault-black: #0a0a0b;
+  --vault-surface: #18181b;
+  --vault-elevated: #27272a;
+  --vault-gold: #f59e0b;
+  --vault-gold-light: #fcd34d;
+  --vault-muted: #78716c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--vault-black);
+  color: #fafafa;
+  font-family: "Inter", sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--vault-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--vault-elevated);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vault-muted);
+}
+
+/* Digit input - remove spinner */
+input[type="text"]::-webkit-inner-spin-button,
+input[type="text"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@layer utilities {
+  .text-shadow-gold {
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+  }
+  .glow-gold {
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+  }
+  .glow-gold-strong {
+    box-shadow: 0 0 60px rgba(245, 158, 11, 0.5),
+      0 0 120px rgba(245, 158, 11, 0.2);
+  }
+}
