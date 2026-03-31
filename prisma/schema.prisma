@@ -1,0 +1,85 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          String   @id @default(cuid())
+  displayName String
+  createdAt   DateTime @default(now())
+
+  guesses         Guess[]
+  ledgerEntries   GuessLedger[]
+  taskCompletions TaskCompletion[]
+  crackedVaults   Vault[]          @relation("CrackedBy")
+}
+
+model Vault {
+  id        String   @id @default(cuid())
+  codeLength Int      @default(4)
+  codeHash  String
+  startsAt  DateTime @default(now())
+  expiresAt DateTime
+
+  isCracked     Boolean  @default(false)
+  crackedByUserId String?
+  crackedAt     DateTime?
+  crackedBy     User?    @relation("CrackedBy", fields: [crackedByUserId], references: [id])
+
+  guesses Guess[]
+}
+
+model Guess {
+  id               String   @id @default(cuid())
+  vaultId          String
+  userId           String
+  guess            String
+  correctPositions Int
+  correctDigits    Int
+  feedback         String
+  createdAt        DateTime @default(now())
+
+  vault Vault @relation(fields: [vaultId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([vaultId, createdAt])
+  @@index([userId, vaultId])
+}
+
+model GuessLedger {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String
+  taskId    String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Task {
+  id           String @id
+  name         String
+  description  String
+  rewardGuesses Int
+  type         String
+
+  completions TaskCompletion[]
+}
+
+model TaskCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  taskId      String
+  claimedDate String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@unique([userId, taskId, claimedDate])
+}

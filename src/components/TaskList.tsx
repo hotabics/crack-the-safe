@@ -35,6 +35,10 @@ export function TaskList() {
     bonus: tasks.filter((t) => t.type === "bonus"),
   };
 
+  const handleClaim = async (taskId: string) => {
+    await claimTask(taskId);
+  };
+
   return (
     <div className="bg-vault-surface rounded-xl border border-vault-elevated p-4 sm:p-6">
       <h2 className="font-heading font-bold text-lg text-zinc-100 mb-4">
@@ -79,7 +83,7 @@ export function TaskList() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => claimTask(task.id)}
+                      onClick={() => handleClaim(task.id)}
                       disabled={!isAuthenticated}
                       className="text-xs font-bold px-3 py-1 rounded-full bg-vault-gold text-black
                                  hover:bg-vault-gold-light disabled:opacity-30 disabled:cursor-not-allowed

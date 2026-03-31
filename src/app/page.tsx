@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { VaultDoor } from "@/components/VaultDoor";
 import { SafeDial } from "@/components/SafeDial";
@@ -11,11 +11,20 @@ import { CountdownTimer } from "@/components/CountdownTimer";
 import { TaskList } from "@/components/TaskList";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Stats } from "@/components/Stats";
+import { useVaultStore } from "@/stores/vaultStore";
 
 type Tab = "hints" | "history" | "tasks";
 
 export default function Home() {
   const [mobileTab, setMobileTab] = useState<Tab>("hints");
+  const { fetchVaultState, fetchHints, fetchProfile } = useVaultStore();
+
+  useEffect(() => {
+    fetchVaultState();
+    fetchHints();
+    // Try to restore session — fetchProfile will silently fail if not authenticated
+    fetchProfile();
+  }, [fetchVaultState, fetchHints, fetchProfile]);
 
   return (
     <>

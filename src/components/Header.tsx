@@ -11,16 +11,11 @@ export function Header() {
     bluffBalance,
     connectWallet,
     disconnect,
+    isConnecting,
   } = useVaultStore();
 
-  const handleConnect = () => {
-    // Demo: simulate wallet connection with a random address
-    const fakeAddr =
-      "0x" +
-      Array.from({ length: 40 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
-    connectWallet(fakeAddr);
+  const handleConnect = async () => {
+    await connectWallet();
   };
 
   return (
@@ -93,9 +88,10 @@ export function Header() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleConnect}
-              className="bg-vault-gold text-black font-bold text-sm px-5 py-2 rounded-full hover:bg-vault-gold-light transition-colors"
+              disabled={isConnecting}
+              className="bg-vault-gold text-black font-bold text-sm px-5 py-2 rounded-full hover:bg-vault-gold-light transition-colors disabled:opacity-50"
             >
-              Connect Wallet
+              {isConnecting ? "Connecting..." : "Connect Wallet"}
             </motion.button>
           )}
         </div>

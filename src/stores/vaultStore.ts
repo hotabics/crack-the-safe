@@ -1,5 +1,14 @@
 import { create } from "zustand";
-import { GuessResult, evaluateGuess, generateVaultCode } from "@/lib/vault-logic";
+import { GuessResult, getFeedbackLabel } from "@/lib/vault-logic";
+import {
+  apiClient,
+  HintItem,
+  GuessResultResponse,
+} from "@/lib/api-client";
+
+// Re-export for components that import from here
+export type { GuessResult } from "@/lib/vault-logic";
+export { getFeedbackLabel } from "@/lib/vault-logic";
 
 interface Task {
   id: string;
@@ -12,10 +21,10 @@ interface Task {
 
 interface VaultState {
   // Vault
-  secretCode: string;
   isVaultCracked: boolean;
   vaultStartedAt: number;
   vaultExpiresAt: number;
+  codeLength: number;
 
   // User
   isAuthenticated: boolean;
@@ -28,7 +37,7 @@ interface VaultState {
   // Guesses
   userGuesses: GuessResult[];
   globalHints: GuessResult[];
-  heatLevel: number; // 0-4
+  heatLevel: number;
 
   // Tasks
   tasks: Task[];
@@ -37,175 +46,205 @@ interface VaultState {
   totalAttempts: number;
   totalPlayers: number;
 
+  // Loading states
+  isLoading: boolean;
+  isSubmitting: boolean;
+  isConnecting: boolean;
+
   // Actions
-  submitGuess: (guess: string) => GuessResult | null;
-  claimTask: (taskId: string) => void;
-  connectWallet: (address: string) => void;
-  disconnect: () => void;
-  resetVault: () => void;
+  submitGuess: (guess: string) => Promise<GuessResultResponse | null>;
+  claimTask: (taskId: string) => Promise<void>;
+  connectWallet: () => Promise<void>;
+  disconnect: () => Promise<void>;
+  fetchVaultState: () => Promise<void>;
+  fetchProfile: () => Promise<void>;
+  fetchHints: () => Promise<void>;
 }
 
-const DEFAULT_TASKS: Task[] = [
-  {
-    id: "daily-login",
-    name: "Daily Login",
-    description: "Come back every day for free guesses",
-    rewardGuesses: 1,
-    type: "daily",
-    claimed: false,
-  },
-  {
-    id: "streak-7",
-    name: "7-Day Streak",
-    description: "Login 7 days in a row for bonus guesses",
-    rewardGuesses: 10,
-    type: "daily",
-    claimed: false,
-  },
-  {
-    id: "follow-x",
-    name: "Follow on X",
-    description: "Follow @CrackTheSafe on X",
-    rewardGuesses: 2,
-    type: "quest",
-    claimed: false,
-  },
-  {
-    id: "join-discord",
-    name: "Join Discord",
-    description: "Join our Discord community",
-    rewardGuesses: 3,
-    type: "quest",
-    claimed: false,
-  },
-  {
-    id: "refer-friend",
-    name: "Refer a Friend",
-    description: "Share your referral link",
-    rewardGuesses: 3,
-    type: "quest",
-    claimed: false,
-  },
-  {
-    id: "hold-bluff",
-    name: "Hold 100+ $BLUFF",
-    description: "Verify $BLUFF tokens in your wallet",
-    rewardGuesses: 5,
-    type: "quest",
-    claimed: false,
-  },
-  {
-    id: "share-guess",
-    name: "Share Your Closest Guess",
-    description: "Post your best attempt on X",
-    rewardGuesses: 2,
-    type: "bonus",
-    claimed: false,
-  },
-  {
-    id: "community-10k",
-    name: "Community Milestone: 10K Attempts",
-    description: "Unlocks when 10,000 total guesses are made",
-    rewardGuesses: 5,
-    type: "bonus",
-    claimed: false,
-  },
-];
-
-// Simulated global hints from "other players"
-function generateFakeHints(): GuessResult[] {
-  const feedbacks: Array<GuessResult["feedback"]> = ["cold", "warm", "hot", "cold", "warm", "cold", "hot", "warm"];
-  return feedbacks.map((feedback, i) => ({
-    guess: "????",
-    correctPositions: feedback === "hot" ? Math.floor(Math.random() * 2) + 1 : 0,
-    correctDigits: feedback === "warm" ? Math.floor(Math.random() * 2) + 1 : 0,
-    feedback,
-    timestamp: Date.now() - (feedbacks.length - i) * 60000,
-  }));
+function hintToGuessResult(hint: HintItem): GuessResult {
+  return {
+    guess: hint.guess,
+    correctPositions: hint.correctPositions,
+    correctDigits: hint.correctDigits,
+    feedback: hint.feedback as GuessResult["feedback"],
+    timestamp: new Date(hint.createdAt).getTime(),
+  };
 }
 
 export const useVaultStore = create<VaultState>((set, get) => ({
   // Initial state
-  secretCode: generateVaultCode(),
   isVaultCracked: false,
   vaultStartedAt: Date.now(),
-  vaultExpiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+  vaultExpiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+  codeLength: 4,
 
   isAuthenticated: false,
   walletAddress: null,
   displayName: "",
-  guessBalance: 5, // start with 5 free guesses
+  guessBalance: 0,
   bluffBalance: 0,
   streakDays: 0,
 
   userGuesses: [],
-  globalHints: generateFakeHints(),
+  globalHints: [],
   heatLevel: 0,
 
-  tasks: DEFAULT_TASKS,
+  tasks: [],
 
-  totalAttempts: 1247,
-  totalPlayers: 892,
+  totalAttempts: 0,
+  totalPlayers: 0,
 
-  submitGuess: (guess: string) => {
+  isLoading: false,
+  isSubmitting: false,
+  isConnecting: false,
+
+  submitGuess: async (guess: string) => {
     const state = get();
-    if (state.guessBalance <= 0 || state.isVaultCracked || !state.isAuthenticated) return null;
+    if (state.isSubmitting || state.guessBalance <= 0 || state.isVaultCracked || !state.isAuthenticated) return null;
 
-    const result = evaluateGuess(guess, state.secretCode);
+    set({ isSubmitting: true });
+    try {
+      const result = await apiClient.submitGuess(guess);
 
-    set((s) => ({
-      guessBalance: s.guessBalance - 1,
-      userGuesses: [result, ...s.userGuesses],
-      globalHints: [
-        { ...result, guess: "????" },
-        ...s.globalHints.slice(0, 49),
-      ],
-      heatLevel: Math.max(s.heatLevel, result.correctPositions),
-      totalAttempts: s.totalAttempts + 1,
-      isVaultCracked: result.feedback === "cracked",
-      bluffBalance: result.feedback === "cracked" ? s.bluffBalance + 1000000 : s.bluffBalance,
-    }));
+      const guessResult: GuessResult = {
+        guess: result.guess,
+        correctPositions: result.correctPositions,
+        correctDigits: result.correctDigits,
+        feedback: result.feedback,
+        timestamp: Date.now(),
+      };
 
-    return result;
+      set((s) => ({
+        guessBalance: result.newBalance,
+        userGuesses: [guessResult, ...s.userGuesses],
+        globalHints: [
+          { ...guessResult, guess: "????" },
+          ...s.globalHints.slice(0, 49),
+        ],
+        heatLevel: Math.max(s.heatLevel, result.correctPositions),
+        totalAttempts: s.totalAttempts + 1,
+        isVaultCracked: result.isVaultCracked,
+        bluffBalance: result.isVaultCracked ? s.bluffBalance + 1_000_000 : s.bluffBalance,
+      }));
+
+      return result;
+    } catch (error) {
+      console.error("Submit guess failed:", error);
+      return null;
+    } finally {
+      set({ isSubmitting: false });
+    }
   },
 
-  claimTask: (taskId: string) => {
-    set((s) => {
-      const task = s.tasks.find((t) => t.id === taskId);
-      if (!task || task.claimed || !s.isAuthenticated) return s;
-      return {
+  claimTask: async (taskId: string) => {
+    const state = get();
+    if (!state.isAuthenticated) return;
+
+    try {
+      const result = await apiClient.claimTask(taskId);
+
+      set((s) => ({
         tasks: s.tasks.map((t) =>
           t.id === taskId ? { ...t, claimed: true } : t
         ),
-        guessBalance: s.guessBalance + task.rewardGuesses,
-      };
-    });
+        guessBalance: result.newBalance,
+      }));
+    } catch (error) {
+      console.error("Claim task failed:", error);
+    }
   },
 
-  connectWallet: (address: string) => {
-    set({
-      isAuthenticated: true,
-      walletAddress: address,
-      displayName: address.slice(0, 6) + "..." + address.slice(-4),
-    });
+  connectWallet: async () => {
+    set({ isConnecting: true });
+    try {
+      // Generate a display name
+      const fakeName =
+        "Player_" +
+        Array.from({ length: 6 }, () =>
+          Math.floor(Math.random() * 16).toString(16)
+        ).join("");
+
+      const result = await apiClient.connect(fakeName);
+
+      set({
+        isAuthenticated: true,
+        walletAddress: result.userId,
+        displayName: result.displayName,
+        guessBalance: result.guessBalance,
+      });
+
+      // Fetch full profile (tasks, etc.)
+      get().fetchProfile();
+    } catch (error) {
+      console.error("Connect failed:", error);
+    } finally {
+      set({ isConnecting: false });
+    }
   },
 
-  disconnect: () => {
+  disconnect: async () => {
+    try {
+      await apiClient.logout();
+    } catch {
+      // Ignore logout errors
+    }
     set({
       isAuthenticated: false,
       walletAddress: null,
       displayName: "",
+      guessBalance: 0,
+      bluffBalance: 0,
+      userGuesses: [],
+      tasks: [],
     });
   },
 
-  resetVault: () => {
-    set({
-      secretCode: generateVaultCode(),
-      isVaultCracked: false,
-      vaultStartedAt: Date.now(),
-      vaultExpiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      userGuesses: [],
-      heatLevel: 0,
-    });
+  fetchVaultState: async () => {
+    set({ isLoading: true });
+    try {
+      const vault = await apiClient.getVaultCurrent();
+      set({
+        isVaultCracked: vault.isCracked,
+        vaultStartedAt: new Date(vault.startsAt).getTime(),
+        vaultExpiresAt: new Date(vault.expiresAt).getTime(),
+        codeLength: vault.codeLength,
+        heatLevel: vault.heatLevel,
+        totalAttempts: vault.totalAttempts,
+        totalPlayers: vault.totalPlayers,
+      });
+    } catch (error) {
+      console.error("Fetch vault state failed:", error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchProfile: async () => {
+    try {
+      const profile = await apiClient.getProfile();
+      set({
+        isAuthenticated: true,
+        displayName: profile.displayName,
+        walletAddress: profile.userId,
+        guessBalance: profile.guessBalance,
+        tasks: profile.tasks.map((t) => ({
+          ...t,
+          type: t.type as Task["type"],
+        })),
+      });
+    } catch {
+      // Not authenticated or error — leave state as-is
+    }
+  },
+
+  fetchHints: async () => {
+    try {
+      const data = await apiClient.getHints();
+      set({
+        globalHints: data.hints.map(hintToGuessResult),
+      });
+    } catch (error) {
+      console.error("Fetch hints failed:", error);
+    }
   },
 }));

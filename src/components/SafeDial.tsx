@@ -6,7 +6,7 @@ import { useVaultStore } from "@/stores/vaultStore";
 import { getFeedbackLabel, GuessResult } from "@/lib/vault-logic";
 
 export function SafeDial() {
-  const { isAuthenticated, guessBalance, isVaultCracked, submitGuess } =
+  const { isAuthenticated, guessBalance, isVaultCracked, isSubmitting, submitGuess } =
     useVaultStore();
   const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
   const [lastResult, setLastResult] = useState<GuessResult | null>(null);
@@ -35,20 +35,28 @@ export function SafeDial() {
         handleSubmit();
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [digits]
   );
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const code = digits.join("");
-    if (code.length !== 4) return;
+    if (code.length !== 4 || isSubmitting) return;
 
-    const result = submitGuess(code);
-    if (result) {
-      setLastResult(result);
+    const apiResult = await submitGuess(code);
+    if (apiResult) {
+      const guessResult: GuessResult = {
+        guess: apiResult.guess,
+        correctPositions: apiResult.correctPositions,
+        correctDigits: apiResult.correctDigits,
+        feedback: apiResult.feedback,
+        timestamp: Date.now(),
+      };
+      setLastResult(guessResult);
       setDigits(["", "", "", ""]);
       inputRefs.current[0]?.focus();
 
-      if (result.feedback === "cold") {
+      if (apiResult.feedback === "cold") {
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 500);
       }
@@ -79,7 +87,7 @@ export function SafeDial() {
             value={digit}
             onChange={(e) => handleDigitChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
-            disabled={isDisabled}
+            disabled={isDisabled || isSubmitting}
             className="w-14 h-18 sm:w-16 sm:h-20 text-center text-3xl font-mono bg-black
                        border-2 border-zinc-600 rounded-lg text-vault-gold
                        focus:border-vault-gold focus:outline-none focus:glow-gold
@@ -93,21 +101,23 @@ export function SafeDial() {
 
       {/* Submit button */}
       <motion.button
-        whileHover={!isDisabled && isFilled ? { scale: 1.02 } : {}}
-        whileTap={!isDisabled && isFilled ? { scale: 0.98 } : {}}
+        whileHover={!isDisabled && isFilled && !isSubmitting ? { scale: 1.02 } : {}}
+        whileTap={!isDisabled && isFilled && !isSubmitting ? { scale: 0.98 } : {}}
         onClick={handleSubmit}
-        disabled={isDisabled || !isFilled}
+        disabled={isDisabled || !isFilled || isSubmitting}
         className="px-8 py-3 bg-vault-gold text-black font-bold text-sm rounded-full
                    hover:bg-vault-gold-light disabled:opacity-30 disabled:cursor-not-allowed
                    transition-all duration-200"
       >
-        {!isAuthenticated
-          ? "Connect Wallet to Play"
-          : isVaultCracked
-            ? "VAULT CRACKED!"
-            : guessBalance <= 0
-              ? "No Guesses Left - Complete Tasks"
-              : `CRACK IT (${guessBalance} left)`}
+        {isSubmitting
+          ? "Submitting..."
+          : !isAuthenticated
+            ? "Connect Wallet to Play"
+            : isVaultCracked
+              ? "VAULT CRACKED!"
+              : guessBalance <= 0
+                ? "No Guesses Left - Complete Tasks"
+                : `CRACK IT (${guessBalance} left)`}
       </motion.button>
 
       {/* Feedback display */}
