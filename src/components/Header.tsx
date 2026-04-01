@@ -1,22 +1,33 @@
 "use client";
 
 import { useVaultStore } from "@/stores/vaultStore";
-import { motion } from "framer-motion";
+import { useAppKitAccount } from "@reown/appkit/react";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 export function Header() {
   const {
     isAuthenticated,
-    displayName,
     guessBalance,
     bluffBalance,
-    connectWallet,
-    disconnect,
-    isConnecting,
+    onWalletConnected,
+    onWalletDisconnected,
   } = useVaultStore();
 
-  const handleConnect = async () => {
-    await connectWallet();
-  };
+  const { address, isConnected } = useAppKitAccount();
+  const { data: session } = useSession();
+
+  // Sync AppKit wallet state with our Zustand store
+  useEffect(() => {
+    if (isConnected && address && session?.address) {
+      onWalletConnected(
+        session.address.toLowerCase(),
+        `${session.address.slice(0, 6)}...${session.address.slice(-4)}`
+      );
+    } else if (!isConnected) {
+      onWalletDisconnected();
+    }
+  }, [isConnected, address, session, onWalletConnected, onWalletDisconnected]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-vault-black/80 backdrop-blur-md border-b border-vault-elevated">
@@ -42,58 +53,38 @@ export function Header() {
           </span>
         </div>
 
-        {/* User Info */}
+        {/* User Info + Wallet */}
         <div className="flex items-center gap-4">
-          {isAuthenticated ? (
-            <>
-              <div className="hidden sm:flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5 bg-vault-surface px-3 py-1.5 rounded-full border border-vault-elevated">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#F59E0B"
-                    strokeWidth="2"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 6v6l4 2" />
-                  </svg>
-                  <span className="font-mono text-vault-gold font-medium">
-                    {guessBalance}
-                  </span>
-                  <span className="text-vault-muted">guesses</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-vault-surface px-3 py-1.5 rounded-full border border-vault-elevated">
-                  <span className="font-mono text-vault-gold-light font-medium">
-                    {bluffBalance.toLocaleString()}
-                  </span>
-                  <span className="text-vault-muted">$BLUFF</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-sm text-zinc-400">
-                  {displayName}
-                </span>
-                <button
-                  onClick={disconnect}
-                  className="text-xs text-vault-muted hover:text-zinc-300 transition-colors"
+          {isAuthenticated && (
+            <div className="hidden sm:flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1.5 bg-vault-surface px-3 py-1.5 rounded-full border border-vault-elevated">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#F59E0B"
+                  strokeWidth="2"
                 >
-                  Disconnect
-                </button>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+                <span className="font-mono text-vault-gold font-medium">
+                  {guessBalance}
+                </span>
+                <span className="text-vault-muted">guesses</span>
               </div>
-            </>
-          ) : (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleConnect}
-              disabled={isConnecting}
-              className="bg-vault-gold text-black font-bold text-sm px-5 py-2 rounded-full hover:bg-vault-gold-light transition-colors disabled:opacity-50"
-            >
-              {isConnecting ? "Connecting..." : "Connect Wallet"}
-            </motion.button>
+              <div className="flex items-center gap-1.5 bg-vault-surface px-3 py-1.5 rounded-full border border-vault-elevated">
+                <span className="font-mono text-vault-gold-light font-medium">
+                  {bluffBalance.toLocaleString()}
+                </span>
+                <span className="text-vault-muted">$BLUFF</span>
+              </div>
+            </div>
           )}
+
+          {/* Reown AppKit Connect Button */}
+          <appkit-button />
         </div>
       </div>
     </header>

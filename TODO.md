@@ -11,32 +11,33 @@
 🔴 **These must be completed before any public launch.**
 
 ### Database Setup
-- [ ] 🔴 Set up PostgreSQL (Neon or Supabase recommended for Vercel)
-- [ ] 🔴 Create all tables: users, wallets, vaults, guesses, guess_ledger, tasks, task_completions, auth_nonces, token_transactions
-- [ ] 🔴 Add indexes on hot paths (guesses by vault_id, ledger by user_id, wallets by address)
-- [ ] 🔴 Set up database migrations (use Prisma or Drizzle ORM)
-- [ ] 🟡 Add connection pooling (PgBouncer or Neon's built-in pooler)
+- [x] 🔴 Set up database (SQLite for dev, PostgreSQL for prod)
+- [x] 🔴 Create all tables: users, vaults, guesses, guess_ledger, tasks, task_completions
+- [x] 🔴 Add indexes on hot paths (guesses by vault_id, ledger by user_id, wallets by address)
+- [x] 🔴 Set up database migrations (Prisma ORM)
+- [x] 🔴 Seed database with initial vault and tasks
+- [ ] 🟡 Add connection pooling (PgBouncer or Neon's built-in pooler) — for PostgreSQL in prod
 
 ### Server-Side Vault Code
-- [ ] 🔴 **Move secret code generation to server** — currently exposed in client-side Zustand store
-- [ ] 🔴 Store vault code in external secrets manager (Vercel env vars minimum, AWS SSM or HashiCorp Vault for production)
-- [ ] 🔴 Implement server-side guess evaluation in API route (never send code to client)
-- [ ] 🔴 Use constant-time comparison to prevent timing side-channel attacks
-- [ ] 🔴 Hash stored code with salt (SHA-256) — plaintext only in memory during evaluation
+- [x] 🔴 **Move secret code generation to server** — code in VAULT_SECRET_CODE env var
+- [x] 🔴 Store vault code in env vars (Vercel env vars for production)
+- [x] 🔴 Implement server-side guess evaluation in API route (never send code to client)
+- [x] 🔴 Use constant-time comparison to prevent timing side-channel attacks
+- [x] 🔴 Hash stored code with SHA-256 — plaintext only in memory during evaluation
 
 ### API Routes (Replace Client-Side Logic)
-- [ ] 🔴 `POST /api/vault/guess` — validate auth, check balance, evaluate guess, return feedback only
-- [ ] 🔴 `GET /api/vault/current` — return vault metadata (no code), heat level, expiry time
-- [ ] 🔴 `GET /api/vault/hints` — return last 50 anonymous guesses with feedback
-- [ ] 🔴 `GET /api/user/profile` — return guess balance, $BLUFF balance, streak
-- [ ] 🔴 `POST /api/tasks/:id/claim` — validate and credit guesses atomically
+- [x] 🔴 `POST /api/vault/guess` — validate auth, check balance, evaluate guess, return feedback only
+- [x] 🔴 `GET /api/vault/current` — return vault metadata (no code), heat level, expiry time
+- [x] 🔴 `GET /api/vault/hints` — return last 50 anonymous guesses with feedback
+- [x] 🔴 `GET /api/user/profile` — return guess balance, tasks, completion status
+- [x] 🔴 `POST /api/tasks/:id/claim` — validate and credit guesses atomically
 - [ ] 🟡 `GET /api/vault/heat` — current heat meter level
 - [ ] 🟡 `GET /api/user/guesses` — paginated user guess history
 
 ### Rate Limiting & Anti-Abuse
-- [ ] 🔴 Add rate limiting on `/api/vault/guess` (max 1 guess per 10 seconds per user)
+- [x] 🔴 Add rate limiting on `/api/vault/guess` (max 1 guess per 10 seconds per user)
 - [ ] 🔴 Add global rate limiting on all API routes (use Upstash Ratelimit or similar)
-- [ ] 🔴 Wrap guess submission in a DB transaction (prevent race conditions on balance)
+- [x] 🔴 Wrap guess submission in a DB transaction (prevent race conditions on balance)
 - [ ] 🟡 Add CAPTCHA (hCaptcha or Turnstile) after 3 rapid guesses
 - [ ] 🟡 Device fingerprinting to detect multi-accounting
 - [ ] 🟡 IP-based rate limiting as secondary defense
@@ -46,13 +47,11 @@
 ## Phase 2: Web3 Wallet Authentication (Week 2-3)
 
 ### EVM (MetaMask, Coinbase, WalletConnect)
-- [ ] 🔴 Install wagmi, viem, @rainbow-me/rainbowkit, siwe
-- [ ] 🔴 Create Web3Provider with RainbowKit config (mainnet, Base, Arbitrum, Polygon)
-- [ ] 🔴 Get WalletConnect Project ID from https://cloud.walletconnect.com
-- [ ] 🔴 Implement SIWE (Sign In With Ethereum) nonce flow:
-  - [ ] `GET /api/auth/nonce` — generate and store one-time nonce (10min expiry)
-  - [ ] `POST /api/auth/verify/evm` — verify ECDSA signature, mark nonce used, create session
-- [ ] 🔴 Replace the fake `connectWallet()` in Header.tsx with real RainbowKit ConnectButton
+- [x] 🔴 Install wagmi, viem, @reown/appkit (replaces RainbowKit)
+- [x] 🔴 Create Web3Provider with Reown AppKit config (mainnet)
+- [x] 🔴 Get WalletConnect Project ID (via Reown dashboard)
+- [x] 🔴 Implement SIWE (Sign In With Ethereum) via Reown AppKit SIWE + NextAuth
+- [x] 🔴 Replace fake connectWallet() with AppKit connect button
 
 ### Solana (Phantom, Solflare)
 - [ ] 🟡 Install @solana/wallet-adapter-react, tweetnacl
@@ -62,10 +61,9 @@
 - [ ] 🟡 Build chain selector tabs (EVM / Solana) in WalletAuth component
 
 ### Session Management
-- [ ] 🔴 Install iron-session
-- [ ] 🔴 Implement httpOnly secure cookie sessions (not localStorage)
-- [ ] 🔴 Create `withAuth()` middleware wrapper for protected API routes
-- [ ] 🔴 `POST /api/auth/logout` — destroy session
+- [x] 🔴 Implement session management (NextAuth JWT sessions via httpOnly cookies)
+- [x] 🔴 Create `requireAuth()` middleware for protected API routes (uses getServerSession)
+- [x] 🔴 `POST /api/auth/logout` — logout endpoint
 - [ ] 🟡 Session expiry: 7 days, auto-refresh on activity
 
 ### Multi-Wallet Support
@@ -117,10 +115,10 @@
 ## Phase 5: Task System Hardening (Week 3-5)
 
 ### Server-Side Task Validation
-- [ ] 🔴 Move all task claiming to server (currently client-side — easily exploitable)
-- [ ] 🔴 Daily login: check last_login_date, prevent double-claim per day (DB unique constraint)
+- [x] 🔴 Move all task claiming to server (atomic transactions)
+- [x] 🔴 Daily login: prevent double-claim per day (DB unique constraint)
 - [ ] 🔴 Streak calculation: server-side, based on last_login_date field
-- [ ] 🔴 Atomic guess crediting via guess_ledger (INSERT in transaction)
+- [x] 🔴 Atomic guess crediting via guess_ledger (INSERT in transaction)
 
 ### Social Task Verification
 - [ ] 🟡 Twitter/X follow verification via API (or use Galxe/Zealy integration)
@@ -129,7 +127,7 @@
 - [ ] 🟢 Share-to-earn: verify tweet was posted before crediting guesses
 
 ### Anti-Exploit
-- [ ] 🔴 Server-side guess balance check (SELECT SUM from ledger) inside transaction
+- [x] 🔴 Server-side guess balance check (aggregate from ledger) inside transaction
 - [ ] 🔴 Prevent negative balances with CHECK constraint on ledger
 - [ ] 🟡 Rate limit task claims (max 1 claim per task per day per user)
 - [ ] 🟡 Admin dashboard to monitor suspicious claiming patterns
@@ -139,21 +137,22 @@
 ## Phase 6: Security Hardening (Ongoing)
 
 ### Authentication Security
-- [ ] 🔴 Nonces: single-use, 10-minute expiry, atomic mark-as-used
+- [x] 🔴 SIWE nonces handled by Reown AppKit + NextAuth CSRF tokens
 - [ ] 🔴 Never log wallet signatures or secret codes
 - [ ] 🔴 CORS: restrict to your domain only
+- [x] 🔴 Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, X-XSS-Protection
 - [ ] 🔴 CSP headers: prevent XSS
 - [ ] 🟡 2FA for admin panel access
 
 ### API Security
-- [ ] 🔴 Input validation on all endpoints (zod schemas)
-- [ ] 🔴 SQL injection prevention (parameterized queries only — never string concat)
+- [x] 🔴 Input validation on all endpoints (zod schemas)
+- [x] 🔴 SQL injection prevention (Prisma parameterized queries)
 - [ ] 🔴 Request size limits
 - [ ] 🟡 API key rotation strategy for third-party services
 - [ ] 🟡 Audit logging: every guess, every task claim, every admin action
 
 ### Infrastructure Security
-- [ ] 🔴 All secrets in Vercel Environment Variables (not in code)
+- [x] 🔴 All secrets in environment variables (not in code)
 - [ ] 🔴 Separate env vars for preview vs production deployments
 - [ ] 🟡 Enable Vercel DDoS protection
 - [ ] 🟡 Set up error monitoring (Sentry)
@@ -222,25 +221,22 @@
 
 ```env
 # Database
-DATABASE_URL=                    # PostgreSQL connection string
-
-# Redis
-REDIS_URL=                       # For rate limiting + real-time
+DATABASE_URL=                    # PostgreSQL connection string (or SQLite file: for dev)
 
 # Web3
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=   # From cloud.walletconnect.com
-NEXT_PUBLIC_RPC_MAINNET=                # Alchemy or Infura
-NEXT_PUBLIC_RPC_BASE=
-NEXT_PUBLIC_RPC_SOLANA=
+NEXT_PUBLIC_PROJECT_ID=          # Reown AppKit project ID
 
 # Auth
-SESSION_SECRET=                  # Min 32 chars, random
+NEXTAUTH_SECRET=                 # Min 32 chars, random
+NEXTAUTH_URL=                    # App URL (e.g., http://localhost:3000)
 
 # Vault
-VAULT_SECRET_CODE=               # Or use secrets manager
-VAULT_SIGNER_PRIVATE_KEY=        # For on-chain prize payouts (USE KMS IN PROD)
+VAULT_SECRET_CODE=               # 4-digit secret code (server-only)
 
-# Monitoring
+# Redis (Phase 3)
+REDIS_URL=                       # For rate limiting + real-time
+
+# Monitoring (Phase 6)
 SENTRY_DSN=
 NEXT_PUBLIC_POSTHOG_KEY=
 ```
@@ -248,8 +244,8 @@ NEXT_PUBLIC_POSTHOG_KEY=
 ---
 
 ## Quick Wins (Can Do Today)
-1. Move vault code to a `.env` variable and read server-side only
-2. Add `zod` input validation on the guess endpoint
-3. Add basic rate limiting with `@upstash/ratelimit`
+1. ~~Move vault code to a `.env` variable and read server-side only~~ ✅
+2. ~~Add `zod` input validation on the guess endpoint~~ ✅
+3. Add global rate limiting with `@upstash/ratelimit`
 4. Set up Sentry for error monitoring
 5. Add OpenGraph image for social sharing

@@ -3,7 +3,10 @@ import { cookies } from "next/headers";
 
 export interface SessionData {
   userId?: string;
+  walletAddress?: string;
   createdAt?: number;
+  nonce?: string;
+  nonceExpiresAt?: number;
 }
 
 const sessionOptions = {

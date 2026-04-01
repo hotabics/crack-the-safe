@@ -31,6 +31,7 @@ export interface UserProfileResponse {
   displayName: string;
   guessBalance: number;
   guessCount: number;
+  streakDays: number;
   tasks: Array<{
     id: string;
     name: string;
@@ -39,12 +40,6 @@ export interface UserProfileResponse {
     type: string;
     claimed: boolean;
   }>;
-}
-
-export interface ConnectResponse {
-  userId: string;
-  displayName: string;
-  guessBalance: number;
 }
 
 class ApiError extends Error {
@@ -66,13 +61,6 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export const apiClient = {
-  connect(displayName: string) {
-    return request<ConnectResponse>("/api/auth/connect", {
-      method: "POST",
-      body: JSON.stringify({ displayName }),
-    });
-  },
-
   logout() {
     return request<{ ok: true }>("/api/auth/logout", { method: "POST" });
   },

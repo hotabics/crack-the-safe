@@ -2,6 +2,18 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 
+/** Calculate streak: if lastLoginDate was yesterday, increment; if today, keep; otherwise reset to 1 */
+function calculateStreak(lastLoginDate: string | null, currentStreak: number, today: string): number {
+  if (!lastLoginDate) return 1;
+  if (lastLoginDate === today) return currentStreak;
+
+  const last = new Date(lastLoginDate + "T00:00:00Z");
+  const now = new Date(today + "T00:00:00Z");
+  const diffDays = Math.round((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+
+  return diffDays === 1 ? currentStreak + 1 : 1;
+}
+
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -31,6 +43,26 @@ export async function POST(
       });
       if (existing) throw new Error("ALREADY_CLAIMED");
 
+      // For daily-login task, update streak
+      let streakDays: number | undefined;
+      if (taskId === "daily-login") {
+        const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+        streakDays = calculateStreak(user.lastLoginDate, user.streakDays, today);
+        await tx.user.update({
+          where: { id: userId },
+          data: { lastLoginDate: today, streakDays },
+        });
+      }
+
+      // For streak-7 task, verify the user actually has 7+ day streak
+      if (taskId === "streak-7") {
+        const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+        // Check if daily-login was claimed today (streak is current)
+        if (user.lastLoginDate !== today || user.streakDays < 7) {
+          throw new Error("STREAK_NOT_MET");
+        }
+      }
+
       // Insert completion
       await tx.taskCompletion.create({
         data: { userId, taskId, claimedDate },
@@ -46,13 +78,15 @@ export async function POST(
         },
       });
 
-      // Return new balance
+      // Check balance won't go negative (defensive check)
       const balanceAgg = await tx.guessLedger.aggregate({
         where: { userId },
         _sum: { amount: true },
       });
+      const newBalance = balanceAgg._sum.amount || 0;
+      if (newBalance < 0) throw new Error("BALANCE_NEGATIVE");
 
-      return { newBalance: balanceAgg._sum.amount || 0 };
+      return { newBalance, streakDays };
     });
 
     return NextResponse.json(result);
@@ -63,6 +97,9 @@ export async function POST(
     }
     if (message === "ALREADY_CLAIMED") {
       return NextResponse.json({ error: "Task already claimed" }, { status: 409 });
+    }
+    if (message === "STREAK_NOT_MET") {
+      return NextResponse.json({ error: "7-day streak requirement not met" }, { status: 400 });
     }
     console.error("Task claim error:", error);
     return NextResponse.json({ error: "Failed to claim task" }, { status: 500 });

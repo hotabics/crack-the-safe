@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
 
 export function getVaultCode(): string {
   const code = process.env.VAULT_SECRET_CODE;
@@ -7,8 +7,16 @@ export function getVaultCode(): string {
   return code;
 }
 
-export function hashCode(code: string): string {
-  return createHash("sha256").update(code).digest("hex");
+export function hashCode(code: string, salt: string = ""): string {
+  return createHash("sha256").update(salt + code).digest("hex");
+}
+
+/** Constant-time full-code equality check to prevent timing side-channel attacks */
+function isExactMatch(guess: string, secret: string): boolean {
+  if (guess.length !== secret.length) return false;
+  const guessBuf = Buffer.from(guess, "utf-8");
+  const secretBuf = Buffer.from(secret, "utf-8");
+  return timingSafeEqual(guessBuf, secretBuf);
 }
 
 export interface ServerGuessResult {
@@ -20,6 +28,13 @@ export interface ServerGuessResult {
 
 export function evaluateGuessServer(guess: string): ServerGuessResult {
   const secret = getVaultCode();
+
+  // Use constant-time comparison for the full match check
+  const isCracked = isExactMatch(guess, secret);
+
+  // For partial feedback we still need per-digit analysis.
+  // This leaks some timing info about individual digits, but the critical
+  // "cracked" decision uses constant-time comparison above.
   let correctPositions = 0;
   let correctDigits = 0;
 
@@ -46,7 +61,7 @@ export function evaluateGuessServer(guess: string): ServerGuessResult {
   }
 
   let feedback: ServerGuessResult["feedback"];
-  if (correctPositions === secret.length) {
+  if (isCracked) {
     feedback = "cracked";
   } else if (correctPositions > 0) {
     feedback = "hot";

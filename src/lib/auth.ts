@@ -1,9 +1,22 @@
-import { getSession } from "./session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./auth-options";
+import { prisma } from "./db";
 
 export async function requireAuth(): Promise<string> {
-  const session = await getSession();
-  if (!session.userId) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.address) {
     throw new Error("UNAUTHORIZED");
   }
-  return session.userId;
+
+  const walletAddress = session.address.toLowerCase();
+  const user = await prisma.user.findUnique({
+    where: { walletAddress },
+  });
+
+  if (!user) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  return user.id;
 }

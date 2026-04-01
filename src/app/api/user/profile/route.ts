@@ -52,6 +52,7 @@ export async function GET() {
       displayName: user.displayName,
       guessBalance: balanceAgg._sum.amount || 0,
       guessCount,
+      streakDays: user.streakDays,
       tasks,
     });
   } catch (error) {

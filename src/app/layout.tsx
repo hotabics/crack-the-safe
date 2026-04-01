@@ -1,22 +1,27 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { headers } from 'next/headers'
+import ContextProvider from '@/context'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "Crack the Safe | 1,000,000 $BLUFF",
+  title: 'Crack the Safe | 1,000,000 $BLUFF',
   description:
-    "Crack the 4-digit code and win 1,000,000 $BLUFF coins. Complete tasks, earn guesses, break the vault.",
-};
+    'Crack the 4-digit code and win 1,000,000 $BLUFF coins. Complete tasks, earn guesses, break the vault.',
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
+  const headersObj = await headers()
+  const cookies = headersObj.get('cookie')
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-vault-black antialiased">
-        {children}
+        <ContextProvider cookies={cookies}>{children}</ContextProvider>
       </body>
     </html>
-  );
+  )
 }

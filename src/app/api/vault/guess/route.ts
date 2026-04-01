@@ -22,6 +22,12 @@ export async function POST(req: Request) {
     );
   }
 
+  // Check request size (guard against oversized payloads)
+  const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
+  if (contentLength > 1024) {
+    return NextResponse.json({ error: "Request too large" }, { status: 413 });
+  }
+
   // Validate input
   const body = await req.json();
   const parsed = guessSchema.safeParse(body);

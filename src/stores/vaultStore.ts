@@ -54,7 +54,8 @@ interface VaultState {
   // Actions
   submitGuess: (guess: string) => Promise<GuessResultResponse | null>;
   claimTask: (taskId: string) => Promise<void>;
-  connectWallet: () => Promise<void>;
+  onWalletConnected: (walletAddress: string, displayName: string) => void;
+  onWalletDisconnected: () => void;
   disconnect: () => Promise<void>;
   fetchVaultState: () => Promise<void>;
   fetchProfile: () => Promise<void>;
@@ -154,40 +155,25 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
   },
 
-  connectWallet: async () => {
-    set({ isConnecting: true });
-    try {
-      // Generate a display name
-      const fakeName =
-        "Player_" +
-        Array.from({ length: 6 }, () =>
-          Math.floor(Math.random() * 16).toString(16)
-        ).join("");
+  // Called by Header when AppKit + NextAuth session is established
+  onWalletConnected: (walletAddress: string, displayName: string) => {
+    const state = get();
+    // Prevent re-triggering if already connected with same address
+    if (state.isAuthenticated && state.walletAddress === walletAddress) return;
 
-      const result = await apiClient.connect(fakeName);
+    set({
+      isAuthenticated: true,
+      walletAddress,
+      displayName,
+      isConnecting: false,
+    });
 
-      set({
-        isAuthenticated: true,
-        walletAddress: result.userId,
-        displayName: result.displayName,
-        guessBalance: result.guessBalance,
-      });
-
-      // Fetch full profile (tasks, etc.)
-      get().fetchProfile();
-    } catch (error) {
-      console.error("Connect failed:", error);
-    } finally {
-      set({ isConnecting: false });
-    }
+    // Fetch full profile (tasks, balance, etc.)
+    get().fetchProfile();
   },
 
-  disconnect: async () => {
-    try {
-      await apiClient.logout();
-    } catch {
-      // Ignore logout errors
-    }
+  // Called when wallet disconnects
+  onWalletDisconnected: () => {
     set({
       isAuthenticated: false,
       walletAddress: null,
@@ -197,6 +183,15 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       userGuesses: [],
       tasks: [],
     });
+  },
+
+  disconnect: async () => {
+    try {
+      await apiClient.logout();
+    } catch {
+      // Ignore logout errors
+    }
+    get().onWalletDisconnected();
   },
 
   fetchVaultState: async () => {
@@ -225,8 +220,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       set({
         isAuthenticated: true,
         displayName: profile.displayName,
-        walletAddress: profile.userId,
         guessBalance: profile.guessBalance,
+        streakDays: profile.streakDays,
         tasks: profile.tasks.map((t) => ({
           ...t,
           type: t.type as Task["type"],
