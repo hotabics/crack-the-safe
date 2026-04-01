@@ -2,10 +2,9 @@
 
 import { useVaultStore } from "@/stores/vaultStore";
 import { useAppKitAccount } from "@reown/appkit/react";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useSession, getCsrfToken, signIn } from "next-auth/react";
-import { useSignMessage } from "wagmi";
-import { createSiweMessage } from "viem/siwe";
+import { useWalletClient } from "wagmi";
 import Link from "next/link";
 
 export function Header() {
@@ -20,29 +19,43 @@ export function Header() {
 
   const { address, isConnected } = useAppKitAccount();
   const { data: session, status, update: updateSession } = useSession();
-  const { signMessageAsync } = useSignMessage();
+  const { data: walletClient } = useWalletClient();
   const siweAttempted = useRef(false);
+  const [signingIn, setSigningIn] = useState(false);
 
-  // Manual SIWE sign-in when wallet is connected but no session
+  // Manual SIWE sign-in
   const doSiweSignIn = useCallback(async () => {
-    if (!address || siweAttempted.current) return;
+    if (!address || !walletClient || siweAttempted.current || signingIn) return;
     siweAttempted.current = true;
+    setSigningIn(true);
 
     try {
       const nonce = await getCsrfToken();
-      if (!nonce) return;
+      if (!nonce) {
+        siweAttempted.current = false;
+        setSigningIn(false);
+        return;
+      }
 
-      const message = createSiweMessage({
-        address: address as `0x${string}`,
-        chainId: 1,
-        domain: window.location.host,
-        nonce,
-        uri: window.location.origin,
-        version: "1",
-        statement: "Sign in to Crack the Safe",
-      });
+      const now = new Date();
+      const domain = window.location.host;
+      const uri = window.location.origin;
 
-      const signature = await signMessageAsync({ message });
+      // Build EIP-4361 message manually
+      const message = [
+        `${domain} wants you to sign in with your Ethereum account:`,
+        address,
+        "",
+        "Sign in to Crack the Safe",
+        "",
+        `URI: ${uri}`,
+        `Version: 1`,
+        `Chain ID: 1`,
+        `Nonce: ${nonce}`,
+        `Issued At: ${now.toISOString()}`,
+      ].join("\n");
+
+      const signature = await walletClient.signMessage({ message });
 
       const result = await signIn("credentials", {
         message,
@@ -53,25 +66,39 @@ export function Header() {
 
       if (result?.ok) {
         await updateSession();
-        fetchProfile();
+        // Small delay for session cookie to propagate
+        setTimeout(() => fetchProfile(), 500);
+      } else {
+        console.error("[Header] signIn result:", result);
+        siweAttempted.current = false;
       }
     } catch (e) {
       console.error("[Header] SIWE sign-in failed:", e);
+      siweAttempted.current = false;
+    } finally {
+      setSigningIn(false);
     }
-  }, [address, signMessageAsync, updateSession, fetchProfile]);
+  }, [address, walletClient, signingIn, updateSession, fetchProfile]);
 
-  // When wallet connects but session is not authenticated, trigger SIWE
+  // Auto-trigger SIWE when wallet connects and walletClient is ready
   useEffect(() => {
-    if (isConnected && address && status !== "loading" && !session?.address) {
+    if (
+      isConnected &&
+      address &&
+      walletClient &&
+      status !== "loading" &&
+      !session?.address &&
+      !siweAttempted.current &&
+      !signingIn
+    ) {
       doSiweSignIn();
     }
-    // Reset SIWE attempt flag when wallet disconnects
     if (!isConnected) {
       siweAttempted.current = false;
     }
-  }, [isConnected, address, status, session?.address, doSiweSignIn]);
+  }, [isConnected, address, walletClient, status, session?.address, signingIn, doSiweSignIn]);
 
-  // Sync session data to Zustand store
+  // Sync session to store
   useEffect(() => {
     if (status === "authenticated" && session?.address && isConnected) {
       onWalletConnected(
@@ -90,63 +117,49 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-vault-gold flex items-center justify-center">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="black"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
-          <span className="font-heading font-bold text-lg hidden sm:block">
-            Crack the Safe
-          </span>
+          <span className="font-heading font-bold text-lg hidden sm:block">Crack the Safe</span>
         </Link>
 
         {/* User Info + Wallet */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {isAuthenticated && (
-            <div className="hidden sm:flex items-center gap-4 text-sm">
+            <div className="hidden sm:flex items-center gap-3 text-sm">
               <div className="flex items-center gap-1.5 bg-vault-surface px-3 py-1.5 rounded-full border border-vault-elevated">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#F59E0B"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
                 </svg>
-                <span className="font-mono text-vault-gold font-medium">
-                  {guessBalance}
-                </span>
+                <span className="font-mono text-vault-gold font-medium">{guessBalance}</span>
                 <span className="text-vault-muted">guesses</span>
               </div>
               <div className="flex items-center gap-1.5 bg-vault-surface px-3 py-1.5 rounded-full border border-vault-elevated">
-                <span className="font-mono text-vault-gold-light font-medium">
-                  {bluffBalance.toLocaleString()}
-                </span>
+                <span className="font-mono text-vault-gold-light font-medium">{bluffBalance.toLocaleString()}</span>
                 <span className="text-vault-muted">$BLUFF</span>
               </div>
             </div>
           )}
 
-          {/* Terms link */}
-          <Link
-            href="/terms"
-            className="text-xs text-vault-muted hover:text-zinc-300 transition-colors hidden sm:block"
-          >
+          {/* Manual sign-in button when wallet connected but not authenticated */}
+          {isConnected && !isAuthenticated && !signingIn && (
+            <button
+              onClick={() => { siweAttempted.current = false; doSiweSignIn(); }}
+              className="text-xs font-bold px-3 py-1.5 rounded-full bg-vault-gold text-black hover:bg-vault-gold-light transition-colors"
+            >
+              Sign In
+            </button>
+          )}
+          {signingIn && (
+            <span className="text-xs text-vault-gold animate-pulse">Signing...</span>
+          )}
+
+          <Link href="/terms" className="text-xs text-vault-muted hover:text-zinc-300 transition-colors hidden sm:block">
             How to Play
           </Link>
 
-          {/* Reown AppKit Connect Button */}
           <appkit-button />
         </div>
       </div>

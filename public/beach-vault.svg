@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff7eb3"/>
+      <stop offset="40%" stop-color="#ff758c"/>
+      <stop offset="70%" stop-color="#ffa07a"/>
+      <stop offset="100%" stop-color="#ffd700"/>
+    </linearGradient>
+    <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e90ff"/>
+      <stop offset="100%" stop-color="#0a4a7a"/>
+    </linearGradient>
+    <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4d03f"/>
+      <stop offset="100%" stop-color="#d4a017"/>
+    </linearGradient>
+    <linearGradient id="vaultGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#555"/>
+      <stop offset="100%" stop-color="#222"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff7a0"/>
+      <stop offset="100%" stop-color="#ffd700"/>
+    </radialGradient>
+    <radialGradient id="coin" cx="40%" cy="35%" r="50%">
+      <stop offset="0%" stop-color="#fff44f"/>
+      <stop offset="100%" stop-color="#daa520"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="500" fill="url(#sky)"/>
+
+  <!-- Sun -->
+  <circle cx="650" cy="120" r="60" fill="url(#sun)" filter="url(#glow)" opacity="0.9"/>
+
+  <!-- Ocean -->
+  <ellipse cx="400" cy="340" rx="500" ry="80" fill="url(#ocean)" opacity="0.7"/>
+  <!-- Waves -->
+  <path d="M0 320 Q50 310 100 320 Q150 330 200 320 Q250 310 300 320 Q350 330 400 320 Q450 310 500 320 Q550 330 600 320 Q650 310 700 320 Q750 330 800 320 L800 360 L0 360Z" fill="#2196f3" opacity="0.5"/>
+  <path d="M0 330 Q60 322 120 330 Q180 338 240 330 Q300 322 360 330 Q420 338 480 330 Q540 322 600 330 Q660 338 720 330 Q780 322 800 330 L800 370 L0 370Z" fill="#1976d2" opacity="0.4"/>
+
+  <!-- Sand/Beach -->
+  <path d="M0 350 Q200 330 400 345 Q600 360 800 340 L800 500 L0 500Z" fill="url(#sand)"/>
+
+  <!-- Left Palm Tree -->
+  <g transform="translate(100, 150)">
+    <!-- Trunk -->
+    <path d="M20 200 Q25 120 15 40 Q18 30 22 40 Q30 120 28 200Z" fill="#8b5e3c"/>
+    <!-- Fronds -->
+    <path d="M18 40 Q-30 10 -60 30" stroke="#228b22" stroke-width="4" fill="none"/>
+    <path d="M18 40 Q-20 -10 -40 5" stroke="#228b22" stroke-width="4" fill="none"/>
+    <path d="M18 40 Q10 -15 5 -20" stroke="#2e8b57" stroke-width="4" fill="none"/>
+    <path d="M18 40 Q40 -10 60 5" stroke="#228b22" stroke-width="4" fill="none"/>
+    <path d="M18 40 Q50 15 70 25" stroke="#228b22" stroke-width="4" fill="none"/>
+    <!-- Leaf fills -->
+    <ellipse cx="-30" cy="20" rx="35" ry="12" fill="#228b22" opacity="0.7" transform="rotate(-20 -30 20)"/>
+    <ellipse cx="-15" cy="0" rx="30" ry="10" fill="#2e8b57" opacity="0.7" transform="rotate(-15 -15 0)"/>
+    <ellipse cx="15" cy="-10" rx="25" ry="10" fill="#228b22" opacity="0.7"/>
+    <ellipse cx="45" cy="5" rx="30" ry="10" fill="#2e8b57" opacity="0.7" transform="rotate(15 45 5)"/>
+    <ellipse cx="40" cy="25" rx="30" ry="10" fill="#228b22" opacity="0.7" transform="rotate(20 40 25)"/>
+    <!-- Coconuts -->
+    <circle cx="15" cy="38" r="6" fill="#6b3a00"/>
+    <circle cx="25" cy="42" r="5" fill="#5a3000"/>
+  </g>
+
+  <!-- Right Palm Tree -->
+  <g transform="translate(650, 170)">
+    <path d="M20 180 Q22 100 18 30 Q20 20 24 30 Q28 100 26 180Z" fill="#8b5e3c"/>
+    <ellipse cx="-25" cy="10" rx="30" ry="10" fill="#228b22" opacity="0.7" transform="rotate(-15 -25 10)"/>
+    <ellipse cx="-10" cy="-5" rx="25" ry="9" fill="#2e8b57" opacity="0.7"/>
+    <ellipse cx="20" cy="-5" rx="25" ry="9" fill="#228b22" opacity="0.7"/>
+    <ellipse cx="40" cy="10" rx="28" ry="10" fill="#2e8b57" opacity="0.7" transform="rotate(15 40 10)"/>
+    <ellipse cx="30" cy="25" rx="25" ry="9" fill="#228b22" opacity="0.7" transform="rotate(20 30 25)"/>
+    <circle cx="18" cy="28" r="5" fill="#6b3a00"/>
+    <circle cx="26" cy="32" r="5" fill="#5a3000"/>
+  </g>
+
+  <!-- VAULT/SAFE on the beach -->
+  <g transform="translate(330, 340)">
+    <!-- Shadow -->
+    <ellipse cx="70" cy="130" rx="90" ry="15" fill="rgba(0,0,0,0.2)"/>
+    <!-- Safe body -->
+    <rect x="10" y="10" width="120" height="120" rx="8" fill="url(#vaultGrad)" stroke="#666" stroke-width="3"/>
+    <!-- Safe door detail -->
+    <rect x="20" y="20" width="100" height="100" rx="4" fill="#333" stroke="#555" stroke-width="1"/>
+    <!-- Dial -->
+    <circle cx="70" cy="65" r="22" fill="#444" stroke="#F59E0B" stroke-width="3"/>
+    <circle cx="70" cy="65" r="15" fill="#333" stroke="#777" stroke-width="1"/>
+    <!-- Dial marker -->
+    <line x1="70" y1="48" x2="70" y2="55" stroke="#F59E0B" stroke-width="2"/>
+    <!-- Handle -->
+    <rect x="95" y="55" width="20" height="8" rx="3" fill="#888"/>
+    <circle cx="110" cy="59" r="5" fill="#999"/>
+    <!-- Keyhole -->
+    <circle cx="70" cy="95" r="4" fill="#111"/>
+    <rect x="68" y="95" width="4" height="10" fill="#111"/>
+    <!-- $BLUFF text on safe -->
+    <text x="70" y="115" text-anchor="middle" font-family="monospace" font-size="9" font-weight="bold" fill="#F59E0B">$BLUFF</text>
+    <!-- Gold glow -->
+    <rect x="10" y="10" width="120" height="120" rx="8" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.5"/>
+  </g>
+
+  <!-- Floating gold coins -->
+  <g filter="url(#glow)">
+    <!-- Coins scattered around -->
+    <circle cx="280" cy="380" r="10" fill="url(#coin)" stroke="#b8860b" stroke-width="1"/>
+    <text x="280" y="384" text-anchor="middle" font-size="8" fill="#8b6914" font-weight="bold">$</text>
+
+    <circle cx="510" cy="400" r="12" fill="url(#coin)" stroke="#b8860b" stroke-width="1"/>
+    <text x="510" y="404" text-anchor="middle" font-size="9" fill="#8b6914" font-weight="bold">$</text>
+
+    <circle cx="300" cy="420" r="8" fill="url(#coin)" stroke="#b8860b" stroke-width="1"/>
+    <text x="300" y="423" text-anchor="middle" font-size="7" fill="#8b6914" font-weight="bold">$</text>
+
+    <circle cx="480" cy="370" r="9" fill="url(#coin)" stroke="#b8860b" stroke-width="1"/>
+    <text x="480" y="373" text-anchor="middle" font-size="7" fill="#8b6914" font-weight="bold">$</text>
+
+    <circle cx="250" cy="450" r="11" fill="url(#coin)" stroke="#b8860b" stroke-width="1"/>
+    <text x="250" y="454" text-anchor="middle" font-size="8" fill="#8b6914" font-weight="bold">$</text>
+
+    <circle cx="540" cy="440" r="10" fill="url(#coin)" stroke="#b8860b" stroke-width="1"/>
+    <text x="540" y="444" text-anchor="middle" font-size="8" fill="#8b6914" font-weight="bold">$</text>
+
+    <!-- Flying coins in the air -->
+    <circle cx="350" cy="280" r="8" fill="url(#coin)" stroke="#b8860b" stroke-width="1" opacity="0.8"/>
+    <text x="350" y="283" text-anchor="middle" font-size="7" fill="#8b6914" font-weight="bold">$</text>
+
+    <circle cx="450" cy="260" r="7" fill="url(#coin)" stroke="#b8860b" stroke-width="1" opacity="0.7"/>
+    <text x="450" y="263" text-anchor="middle" font-size="6" fill="#8b6914" font-weight="bold">$</text>
+
+    <circle cx="380" cy="240" r="6" fill="url(#coin)" stroke="#b8860b" stroke-width="1" opacity="0.6"/>
+
+    <circle cx="420" cy="300" r="9" fill="url(#coin)" stroke="#b8860b" stroke-width="1" opacity="0.8"/>
+    <text x="420" y="303" text-anchor="middle" font-size="7" fill="#8b6914" font-weight="bold">$</text>
+  </g>
+
+  <!-- Person 1 (left of safe) - bikini figure -->
+  <g transform="translate(230, 340)">
+    <!-- Body -->
+    <circle cx="30" cy="10" r="12" fill="#f5c6a0"/><!-- head -->
+    <path d="M30 22 L30 60" stroke="#f5c6a0" stroke-width="8"/><!-- body -->
+    <!-- Bikini top -->
+    <path d="M22 32 Q30 28 38 32" stroke="#ff1493" stroke-width="3" fill="none"/>
+    <!-- Bikini bottom -->
+    <rect x="22" y="52" width="16" height="8" rx="3" fill="#ff1493"/>
+    <!-- Arms -->
+    <path d="M26 35 L10 50" stroke="#f5c6a0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M34 35 L48 28" stroke="#f5c6a0" stroke-width="4" stroke-linecap="round"/>
+    <!-- Legs -->
+    <path d="M26 60 L20 95" stroke="#f5c6a0" stroke-width="5" stroke-linecap="round"/>
+    <path d="M34 60 L40 95" stroke="#f5c6a0" stroke-width="5" stroke-linecap="round"/>
+    <!-- Hair -->
+    <path d="M18 8 Q20 -5 30 -2 Q40 -5 42 8" fill="#8b4513"/>
+    <path d="M18 8 Q15 20 12 28" stroke="#8b4513" stroke-width="3" fill="none"/>
+    <!-- Smile -->
+    <path d="M25 14 Q30 19 35 14" stroke="#c4956a" stroke-width="1.5" fill="none"/>
+    <!-- Sunglasses -->
+    <rect x="22" y="6" width="7" height="5" rx="2" fill="#333"/>
+    <rect x="31" y="6" width="7" height="5" rx="2" fill="#333"/>
+    <line x1="29" y1="8" x2="31" y2="8" stroke="#333" stroke-width="1"/>
+  </g>
+
+  <!-- Person 2 (right of safe) -->
+  <g transform="translate(490, 330)">
+    <circle cx="30" cy="10" r="12" fill="#e8b88a"/>
+    <path d="M30 22 L30 60" stroke="#e8b88a" stroke-width="8"/>
+    <path d="M22 32 Q30 28 38 32" stroke="#00bfff" stroke-width="3" fill="none"/>
+    <rect x="22" y="52" width="16" height="8" rx="3" fill="#00bfff"/>
+    <path d="M26 35 L12 28" stroke="#e8b88a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M34 35 L50 45" stroke="#e8b88a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M26 60 L22 95" stroke="#e8b88a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M34 60 L38 95" stroke="#e8b88a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M18 5 Q22 -8 32 -5 Q42 -3 42 10" fill="#ffd700"/>
+    <path d="M42 10 Q45 20 43 28" stroke="#ffd700" stroke-width="3" fill="none"/>
+    <path d="M25 14 Q30 19 35 14" stroke="#c49060" stroke-width="1.5" fill="none"/>
+    <rect x="22" y="6" width="7" height="5" rx="2" fill="#333"/>
+    <rect x="31" y="6" width="7" height="5" rx="2" fill="#333"/>
+    <line x1="29" y1="8" x2="31" y2="8" stroke="#333" stroke-width="1"/>
+  </g>
+
+  <!-- Person 3 (far right) -->
+  <g transform="translate(570, 345)">
+    <circle cx="25" cy="10" r="11" fill="#d4956a"/>
+    <path d="M25 21 L25 55" stroke="#d4956a" stroke-width="7"/>
+    <path d="M18 30 Q25 26 32 30" stroke="#ff69b4" stroke-width="3" fill="none"/>
+    <rect x="18" y="48" width="14" height="7" rx="3" fill="#ff69b4"/>
+    <path d="M21 33 L8 42" stroke="#d4956a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M29 33 L40 25" stroke="#d4956a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M22 55 L18 88" stroke="#d4956a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M28 55 L32 88" stroke="#d4956a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M14 6 Q18 -6 25 -4 Q35 -6 36 6" fill="#1a1a1a"/>
+    <path d="M14 6 Q10 16 10 25" stroke="#1a1a1a" stroke-width="3" fill="none"/>
+    <path d="M36 6 Q40 16 40 25" stroke="#1a1a1a" stroke-width="3" fill="none"/>
+    <path d="M20 14 Q25 18 30 14" stroke="#b87a50" stroke-width="1.5" fill="none"/>
+    <circle cx="21" cy="8" r="2" fill="#333"/>
+    <circle cx="29" cy="8" r="2" fill="#333"/>
+  </g>
+
+  <!-- Title text -->
+  <text x="400" y="480" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#fff" opacity="0.9">CRACK THE SAFE</text>
+  <text x="400" y="498" text-anchor="middle" font-family="monospace" font-size="12" fill="#F59E0B" opacity="0.8">1,000,000 $BLUFF awaits</text>
+</svg>

@@ -37,9 +37,11 @@ const STREAK_TASKS = new Set(["streak-7"]);
 const EXTERNAL_TASKS: Record<string, string | null> = {
   "follow-x": "https://x.com/CrackTheSafe",
   "join-discord": "https://discord.gg/crackthesafe",
+  "join-telegram": "https://t.me/crackthesafe",
+  "partner-offer": null,
   "refer-friend": null,
   "hold-bluff": null,
-  "share-guess": "https://x.com/intent/tweet?text=I%27m%20trying%20to%20Crack%20the%20Safe!%20🔐%20https://crack.scrim42.com",
+  "share-guess": "https://x.com/intent/tweet?text=I%27m%20trying%20to%20Crack%20the%20Safe!%20%F0%9F%94%90%20https://crack.scrim42.com",
   "community-10k": null,
 };
 
@@ -51,6 +53,8 @@ const DEFAULT_TASKS = [
   { id: "join-discord", name: "Join Discord", description: "Join our Discord community", rewardGuesses: 3, type: "quest" as const, claimed: false },
   { id: "refer-friend", name: "Refer a Friend", description: "Share your referral link", rewardGuesses: 3, type: "quest" as const, claimed: false },
   { id: "hold-bluff", name: "Hold 100+ $BLUFF", description: "Verify $BLUFF tokens in your wallet", rewardGuesses: 5, type: "quest" as const, claimed: false },
+  { id: "join-telegram", name: "Join Telegram", description: "Join our Telegram channel", rewardGuesses: 5, type: "quest" as const, claimed: false },
+  { id: "partner-offer", name: "Partner Offer", description: "Complete a partner offer to earn bonus guesses", rewardGuesses: 10, type: "quest" as const, claimed: false },
   { id: "share-guess", name: "Share Your Closest Guess", description: "Post your best attempt on X", rewardGuesses: 2, type: "bonus" as const, claimed: false },
   { id: "community-10k", name: "Community Milestone: 10K Attempts", description: "Unlocks when 10,000 total guesses are made", rewardGuesses: 5, type: "bonus" as const, claimed: false },
 ];

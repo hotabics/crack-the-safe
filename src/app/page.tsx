@@ -45,6 +45,15 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Beach vault illustration */}
+          <div className="relative w-full max-w-xl">
+            <img
+              src="/beach-vault.svg"
+              alt="Beach vault with gold coins"
+              className="w-full h-auto rounded-2xl border border-vault-elevated shadow-2xl"
+            />
+          </div>
+
           {/* Vault visual */}
           <VaultDoor />
 

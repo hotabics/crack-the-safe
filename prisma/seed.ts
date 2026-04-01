@@ -10,6 +10,8 @@ const DEFAULT_TASKS = [
   { id: "join-discord", name: "Join Discord", description: "Join our Discord community", rewardGuesses: 3, type: "quest" },
   { id: "refer-friend", name: "Refer a Friend", description: "Share your referral link", rewardGuesses: 3, type: "quest" },
   { id: "hold-bluff", name: "Hold 100+ $BLUFF", description: "Verify $BLUFF tokens in your wallet", rewardGuesses: 5, type: "quest" },
+  { id: "join-telegram", name: "Join Telegram", description: "Join our Telegram channel", rewardGuesses: 5, type: "quest" },
+  { id: "partner-offer", name: "Partner Offer", description: "Complete a partner offer to earn bonus guesses", rewardGuesses: 10, type: "quest" },
   { id: "share-guess", name: "Share Your Closest Guess", description: "Post your best attempt on X", rewardGuesses: 2, type: "bonus" },
   { id: "community-10k", name: "Community Milestone: 10K Attempts", description: "Unlocks when 10,000 total guesses are made", rewardGuesses: 5, type: "bonus" },
 ];
@@ -23,7 +25,7 @@ async function main() {
       create: task,
     });
   }
-  console.log("Seeded 8 tasks");
+  console.log("Seeded", DEFAULT_TASKS.length, "tasks");
 
   // Create initial vault
   const vaultCode = process.env.VAULT_SECRET_CODE || "739142";
