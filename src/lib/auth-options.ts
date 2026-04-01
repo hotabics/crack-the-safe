@@ -104,13 +104,23 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
   callbacks: {
+    jwt({ token, user }) {
+      // On initial sign-in, persist the user.id (format: "chainId:address") into the JWT
+      if (user) {
+        token.sub = user.id
+      }
+      return token
+    },
     session({ session, token }) {
       if (!token.sub) {
         return session
       }
 
-      const [, chainId, address] = token.sub.split(':')
-      if (chainId && address) {
+      // token.sub format: "chainId:0xAddress"
+      const colonIdx = token.sub.indexOf(':')
+      if (colonIdx !== -1) {
+        const chainId = token.sub.slice(0, colonIdx)
+        const address = token.sub.slice(colonIdx + 1)
         session.address = address
         session.chainId = parseInt(chainId, 10)
       }

@@ -1,6 +1,8 @@
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["crack_the_safe"]
 }
 
 generator client {
@@ -19,6 +21,8 @@ model User {
   ledgerEntries   GuessLedger[]
   taskCompletions TaskCompletion[]
   crackedVaults   Vault[]          @relation("CrackedBy")
+
+  @@schema("crack_the_safe")
 }
 
 model Vault {
@@ -34,6 +38,8 @@ model Vault {
   crackedBy     User?    @relation("CrackedBy", fields: [crackedByUserId], references: [id])
 
   guesses Guess[]
+
+  @@schema("crack_the_safe")
 }
 
 model Guess {
@@ -51,6 +57,7 @@ model Guess {
 
   @@index([vaultId, createdAt])
   @@index([userId, vaultId])
+  @@schema("crack_the_safe")
 }
 
 model GuessLedger {
@@ -62,6 +69,8 @@ model GuessLedger {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+
+  @@schema("crack_the_safe")
 }
 
 model Task {
@@ -72,6 +81,8 @@ model Task {
   type         String
 
   completions TaskCompletion[]
+
+  @@schema("crack_the_safe")
 }
 
 model TaskCompletion {
@@ -85,4 +96,5 @@ model TaskCompletion {
   task Task @relation(fields: [taskId], references: [id])
 
   @@unique([userId, taskId, claimedDate])
+  @@schema("crack_the_safe")
 }
