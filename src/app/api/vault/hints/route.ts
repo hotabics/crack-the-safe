@@ -24,7 +24,7 @@ export async function GET() {
     });
 
     const hints = guesses.map((g) => ({
-      guess: "????",
+      guess: "??????",
       correctPositions: g.correctPositions,
       correctDigits: g.correctDigits,
       feedback: g.feedback,

@@ -119,7 +119,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         guessBalance: result.newBalance,
         userGuesses: [guessResult, ...s.userGuesses],
         globalHints: [
-          { ...guessResult, guess: "????" },
+          { ...guessResult, guess: "??????" },
           ...s.globalHints.slice(0, 49),
         ],
         heatLevel: Math.max(s.heatLevel, result.correctPositions),

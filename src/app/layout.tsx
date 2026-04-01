@@ -6,7 +6,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Crack the Safe | 1,000,000 $BLUFF',
   description:
-    'Crack the 4-digit code and win 1,000,000 $BLUFF coins. Complete tasks, earn guesses, break the vault.',
+    'Crack the 6-digit code and win 1,000,000 $BLUFF coins. Complete tasks, earn guesses, break the vault.',
 }
 
 export default async function RootLayout({

@@ -27,7 +27,7 @@ export default function TermsPage() {
         <h2 className="font-heading font-bold text-xl text-vault-gold mb-4">The Game</h2>
         <div className="text-zinc-300 space-y-3 text-sm leading-relaxed">
           <p>
-            A <strong className="text-zinc-100">4-digit secret code</strong> is locked inside the vault.
+            A <strong className="text-zinc-100">6-digit secret code</strong> is locked inside the vault.
             Your goal is simple: guess the code and win <strong className="text-vault-gold">1,000,000 $BLUFF tokens</strong>.
           </p>
           <p>
@@ -47,7 +47,7 @@ export default function TermsPage() {
         <h2 className="font-heading font-bold text-xl text-vault-gold mb-4">How Guessing Works</h2>
         <div className="text-zinc-300 space-y-3 text-sm leading-relaxed">
           <p>
-            Enter a 4-digit code (0000–9999). After each guess, you get feedback:
+            Enter a 6-digit code (000000–999999). After each guess, you get feedback:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
             <div className="bg-vault-surface border border-vault-elevated rounded-lg p-4 text-center">

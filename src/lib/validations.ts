@@ -3,8 +3,8 @@ import { z } from "zod";
 export const guessSchema = z.object({
   guess: z
     .string()
-    .length(4, "Guess must be exactly 4 digits")
-    .regex(/^\d{4}$/, "Guess must contain only digits"),
+    .length(6, "Guess must be exactly 6 digits")
+    .regex(/^\d{6}$/, "Guess must contain only digits"),
 });
 
 export const taskClaimSchema = z.object({

@@ -48,7 +48,7 @@ export function evaluateGuess(guess: string, secret: string): GuessResult {
   return { guess, correctPositions, correctDigits, feedback, timestamp: Date.now() };
 }
 
-export function generateVaultCode(length: number = 4): string {
+export function generateVaultCode(length: number = 6): string {
   return Array.from({ length }, () => Math.floor(Math.random() * 10)).join("");
 }
 

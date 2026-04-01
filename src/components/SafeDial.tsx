@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useVaultStore } from "@/stores/vaultStore";
 import { getFeedbackLabel, GuessResult } from "@/lib/vault-logic";
 
+const CODE_LENGTH = 6;
+
 export function SafeDial() {
   const { isAuthenticated, guessBalance, isVaultCracked, isSubmitting, submitGuess } =
     useVaultStore();
-  const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
+  const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [lastResult, setLastResult] = useState<GuessResult | null>(null);
   const [isShaking, setIsShaking] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -19,7 +21,7 @@ export function SafeDial() {
       const next = [...digits];
       next[index] = value;
       setDigits(next);
-      if (value && index < 3) {
+      if (value && index < CODE_LENGTH - 1) {
         inputRefs.current[index + 1]?.focus();
       }
     },
@@ -39,9 +41,26 @@ export function SafeDial() {
     [digits]
   );
 
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      e.preventDefault();
+      const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, CODE_LENGTH);
+      if (pasted.length > 0) {
+        const next = Array(CODE_LENGTH).fill("");
+        for (let i = 0; i < pasted.length; i++) {
+          next[i] = pasted[i];
+        }
+        setDigits(next);
+        const focusIdx = Math.min(pasted.length, CODE_LENGTH - 1);
+        inputRefs.current[focusIdx]?.focus();
+      }
+    },
+    []
+  );
+
   const handleSubmit = async () => {
     const code = digits.join("");
-    if (code.length !== 4 || isSubmitting) return;
+    if (code.length !== CODE_LENGTH || isSubmitting) return;
 
     const apiResult = await submitGuess(code);
     if (apiResult) {
@@ -53,7 +72,7 @@ export function SafeDial() {
         timestamp: Date.now(),
       };
       setLastResult(guessResult);
-      setDigits(["", "", "", ""]);
+      setDigits(Array(CODE_LENGTH).fill(""));
       inputRefs.current[0]?.focus();
 
       if (apiResult.feedback === "cold") {
@@ -71,7 +90,7 @@ export function SafeDial() {
     <div className="flex flex-col items-center gap-4">
       {/* Digit inputs */}
       <motion.div
-        className="flex gap-3"
+        className="flex gap-2 sm:gap-3"
         animate={isShaking ? { x: [0, -8, 8, -8, 8, 0] } : {}}
         transition={{ duration: 0.4 }}
       >
@@ -87,8 +106,9 @@ export function SafeDial() {
             value={digit}
             onChange={(e) => handleDigitChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
+            onPaste={i === 0 ? handlePaste : undefined}
             disabled={isDisabled || isSubmitting}
-            className="w-14 h-18 sm:w-16 sm:h-20 text-center text-3xl font-mono bg-black
+            className="w-11 h-14 sm:w-14 sm:h-18 text-center text-2xl sm:text-3xl font-mono bg-black
                        border-2 border-zinc-600 rounded-lg text-vault-gold
                        focus:border-vault-gold focus:outline-none focus:glow-gold
                        disabled:opacity-30 disabled:cursor-not-allowed

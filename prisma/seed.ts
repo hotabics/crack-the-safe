@@ -26,7 +26,7 @@ async function main() {
   console.log("Seeded 8 tasks");
 
   // Create initial vault
-  const vaultCode = process.env.VAULT_SECRET_CODE || "7391";
+  const vaultCode = process.env.VAULT_SECRET_CODE || "739142";
   const codeHash = createHash("sha256").update(vaultCode).digest("hex");
 
   const existingVault = await prisma.vault.findFirst({

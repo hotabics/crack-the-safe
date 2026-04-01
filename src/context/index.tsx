@@ -19,7 +19,7 @@ if (!projectId) {
 // Set up metadata
 const metadata = {
   name: 'Crack the Safe',
-  description: 'Crack the 4-digit code and win 1,000,000 $BLUFF coins',
+  description: 'Crack the 6-digit code and win 1,000,000 $BLUFF coins',
   url: 'https://crack.scrim42.com',
   icons: ['https://crack.scrim42.com/icon.png']
 }

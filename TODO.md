@@ -256,7 +256,7 @@
 - [ ] 🟢 After crack: new vault with 5-digit code + bigger prize
 - [ ] 🟢 Season system: monthly leaderboards with bonus prizes
 - [ ] 🟢 Near-miss consolation prizes (3/4 correct = small $BLUFF reward)
-- [ ] 🟢 Vault difficulty tiers (4-digit, 5-digit, 6-digit)
+- [ ] 🟢 Vault difficulty tiers (6-digit, 5-digit, 6-digit)
 
 ### Monetization
 - [ ] 🟢 Buy extra guesses with $BLUFF tokens (burn mechanic)
@@ -285,7 +285,7 @@ NEXTAUTH_SECRET=                 # Min 32 chars, random
 NEXTAUTH_URL=                    # App URL (e.g., https://crack.scrim42.com)
 
 # Vault
-VAULT_SECRET_CODE=               # 4-digit secret code (server-only)
+VAULT_SECRET_CODE=               # 6-digit secret code (server-only)
 
 # Redis (Phase 3)
 REDIS_URL=                       # For rate limiting + real-time

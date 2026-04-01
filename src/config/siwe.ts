@@ -12,7 +12,7 @@ export const siweConfig = createSIWEConfig({
     domain: typeof window !== 'undefined' ? window.location.host : '',
     uri: typeof window !== 'undefined' ? window.location.origin : '',
     chains: [mainnet.id],
-    statement: 'Sign in to Crack the Safe 🔐',
+    statement: 'Sign in to Crack the Safe',
   }),
 
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) =>
@@ -53,8 +53,14 @@ export const siweConfig = createSIWEConfig({
         signature,
         callbackUrl: '/',
       })
+
+      if (!success?.ok) {
+        console.error('[SIWE] signIn failed:', success?.error)
+      }
+
       return Boolean(success?.ok)
     } catch (error) {
+      console.error('[SIWE] verifyMessage error:', error)
       return false
     }
   },
@@ -64,6 +70,7 @@ export const siweConfig = createSIWEConfig({
       await signOut({ redirect: false })
       return true
     } catch (error) {
+      console.error('[SIWE] signOut error:', error)
       return false
     }
   },

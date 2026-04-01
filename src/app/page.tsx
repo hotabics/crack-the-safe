@@ -41,7 +41,7 @@ export default function Home() {
               $BLUFF
             </h1>
             <p className="text-vault-muted text-sm">
-              Locked inside. Crack the 4-digit code to win.
+              Locked inside. Crack the 6-digit code to win.
             </p>
           </div>
 

@@ -1,20 +1,11 @@
 import type { NextAuthOptions } from 'next-auth'
 import credentialsProvider from 'next-auth/providers/credentials'
 import {
-  type SIWESession,
   verifySignature,
   getChainIdFromMessage,
   getAddressFromMessage,
 } from '@reown/appkit-siwe'
 import { prisma } from '@/lib/db'
-
-declare module 'next-auth' {
-  interface Session extends SIWESession {
-    address: string
-    chainId: number
-    userId?: string
-  }
-}
 
 const nextAuthSecret = process.env.NEXTAUTH_SECRET
 if (!nextAuthSecret) {
@@ -46,12 +37,15 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           if (!credentials?.message) {
+            console.error('[SIWE] No message in credentials')
             throw new Error('SiweMessage is undefined')
           }
 
           const { message, signature } = credentials
           const address = getAddressFromMessage(message)
           const chainId = getChainIdFromMessage(message)
+
+          console.log('[SIWE] Verifying signature for', address, 'chainId:', chainId)
 
           const isValid = await verifySignature({
             address,
@@ -61,40 +55,46 @@ export const authOptions: NextAuthOptions = {
             projectId: projectId!,
           })
 
-          if (isValid) {
-            // Find or create user by wallet address
-            const walletAddress = address.toLowerCase()
-            let user = await prisma.user.findUnique({
-              where: { walletAddress },
-            })
+          console.log('[SIWE] Signature valid:', isValid)
 
-            if (!user) {
-              const shortAddr = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-              user = await prisma.user.create({
-                data: {
-                  walletAddress,
-                  displayName: shortAddr,
-                },
-              })
-
-              // Grant initial guesses to new user
-              await prisma.guessLedger.create({
-                data: {
-                  userId: user.id,
-                  amount: 5,
-                  reason: 'initial_signup',
-                },
-              })
-            }
-
-            return {
-              id: `${chainId}:${address}`,
-            }
+          if (!isValid) {
+            console.error('[SIWE] Invalid signature')
+            return null
           }
 
-          return null
+          // Find or create user by wallet address
+          const walletAddress = address.toLowerCase()
+          let user = await prisma.user.findUnique({
+            where: { walletAddress },
+          })
+
+          if (!user) {
+            const shortAddr = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+            user = await prisma.user.create({
+              data: {
+                walletAddress,
+                displayName: shortAddr,
+              },
+            })
+
+            // Grant initial guesses to new user
+            await prisma.guessLedger.create({
+              data: {
+                userId: user.id,
+                amount: 5,
+                reason: 'initial_signup',
+              },
+            })
+            console.log('[SIWE] Created new user:', user.id, 'with 5 initial guesses')
+          } else {
+            console.log('[SIWE] Found existing user:', user.id)
+          }
+
+          return {
+            id: `${chainId}:${address}`,
+          }
         } catch (e) {
-          console.error('SIWE authorize error:', e)
+          console.error('[SIWE] authorize error:', e)
           return null
         }
       },
