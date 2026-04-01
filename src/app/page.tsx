@@ -127,6 +127,12 @@ export default function Home() {
             The vault code is generated server-side and never exposed. Play
             fair.
           </p>
+          <a
+            href="/terms"
+            className="inline-block mt-3 text-vault-gold hover:text-vault-gold-light transition-colors"
+          >
+            How to Play &amp; Terms
+          </a>
         </footer>
       </main>
     </>

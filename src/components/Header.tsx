@@ -2,8 +2,9 @@
 
 import { useVaultStore } from "@/stores/vaultStore";
 import { useAppKitAccount } from "@reown/appkit/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 export function Header() {
   const {
@@ -15,25 +16,28 @@ export function Header() {
   } = useVaultStore();
 
   const { address, isConnected } = useAppKitAccount();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const prevConnected = useRef(false);
 
   // Sync AppKit wallet state with our Zustand store
   useEffect(() => {
-    if (isConnected && address && session?.address) {
+    if (isConnected && address && status === "authenticated" && session?.address) {
       onWalletConnected(
         session.address.toLowerCase(),
         `${session.address.slice(0, 6)}...${session.address.slice(-4)}`
       );
-    } else if (!isConnected) {
+      prevConnected.current = true;
+    } else if (!isConnected && prevConnected.current) {
       onWalletDisconnected();
+      prevConnected.current = false;
     }
-  }, [isConnected, address, session, onWalletConnected, onWalletDisconnected]);
+  }, [isConnected, address, session, status, onWalletConnected, onWalletDisconnected]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-vault-black/80 backdrop-blur-md border-b border-vault-elevated">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-vault-gold flex items-center justify-center">
             <svg
               width="16"
@@ -51,7 +55,7 @@ export function Header() {
           <span className="font-heading font-bold text-lg hidden sm:block">
             Crack the Safe
           </span>
-        </div>
+        </Link>
 
         {/* User Info + Wallet */}
         <div className="flex items-center gap-4">
@@ -82,6 +86,14 @@ export function Header() {
               </div>
             </div>
           )}
+
+          {/* Terms link */}
+          <Link
+            href="/terms"
+            className="text-xs text-vault-muted hover:text-zinc-300 transition-colors hidden sm:block"
+          >
+            How to Play
+          </Link>
 
           {/* Reown AppKit Connect Button */}
           <appkit-button />
