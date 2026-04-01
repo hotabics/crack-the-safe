@@ -9,7 +9,7 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
-          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-XSS-Protection", value: "1; mode=block" },
@@ -21,8 +21,8 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.reown.com",
               "font-src 'self' https://fonts.gstatic.com https://fonts.reown.com",
               "img-src 'self' data: blob: https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com https://api.web3modal.org",
-              "connect-src 'self' https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com https://api.web3modal.org https://pulse.walletconnect.org https://rpc.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org wss://*.reown.com https://*.infura.io https://*.alchemy.com https://pay.walletconnect.com https://keys.coinbase.com https://*.thirdweb.com",
-              "frame-src 'self' https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com https://secure.walletconnect.org https://secure-mobile.walletconnect.com https://secure-mobile.walletconnect.org",
+              "connect-src 'self' https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com https://api.web3modal.org https://pulse.walletconnect.org https://rpc.walletconnect.org https://verify.walletconnect.com https://verify.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org wss://*.reown.com https://*.infura.io https://*.alchemy.com https://pay.walletconnect.com https://keys.coinbase.com https://*.thirdweb.com https://echo.walletconnect.com https://echo.walletconnect.org",
+              "frame-src 'self' https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com https://secure.walletconnect.org https://secure-mobile.walletconnect.com https://secure-mobile.walletconnect.org https://verify.walletconnect.com https://verify.walletconnect.org",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
