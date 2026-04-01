@@ -2,8 +2,10 @@
 
 import { useVaultStore } from "@/stores/vaultStore";
 import { useAppKitAccount } from "@reown/appkit/react";
-import { useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useEffect, useRef, useCallback } from "react";
+import { useSession, getCsrfToken, signIn } from "next-auth/react";
+import { useSignMessage } from "wagmi";
+import { createSiweMessage } from "viem/siwe";
 import Link from "next/link";
 
 export function Header() {
@@ -17,50 +19,70 @@ export function Header() {
   } = useVaultStore();
 
   const { address, isConnected } = useAppKitAccount();
-  const { data: session, status } = useSession();
-  const prevStatus = useRef(status);
+  const { data: session, status, update: updateSession } = useSession();
+  const { signMessageAsync } = useSignMessage();
+  const siweAttempted = useRef(false);
 
-  // Sync AppKit wallet state with our Zustand store
+  // Manual SIWE sign-in when wallet is connected but no session
+  const doSiweSignIn = useCallback(async () => {
+    if (!address || siweAttempted.current) return;
+    siweAttempted.current = true;
+
+    try {
+      const nonce = await getCsrfToken();
+      if (!nonce) return;
+
+      const message = createSiweMessage({
+        address: address as `0x${string}`,
+        chainId: 1,
+        domain: window.location.host,
+        nonce,
+        uri: window.location.origin,
+        version: "1",
+        statement: "Sign in to Crack the Safe",
+      });
+
+      const signature = await signMessageAsync({ message });
+
+      const result = await signIn("credentials", {
+        message,
+        signature,
+        redirect: false,
+        callbackUrl: "/",
+      });
+
+      if (result?.ok) {
+        await updateSession();
+        fetchProfile();
+      }
+    } catch (e) {
+      console.error("[Header] SIWE sign-in failed:", e);
+    }
+  }, [address, signMessageAsync, updateSession, fetchProfile]);
+
+  // When wallet connects but session is not authenticated, trigger SIWE
   useEffect(() => {
-    // When session becomes authenticated and has address, sync store
-    if (status === "authenticated" && session?.address && isConnected && address) {
+    if (isConnected && address && status !== "loading" && !session?.address) {
+      doSiweSignIn();
+    }
+    // Reset SIWE attempt flag when wallet disconnects
+    if (!isConnected) {
+      siweAttempted.current = false;
+    }
+  }, [isConnected, address, status, session?.address, doSiweSignIn]);
+
+  // Sync session data to Zustand store
+  useEffect(() => {
+    if (status === "authenticated" && session?.address && isConnected) {
       onWalletConnected(
         session.address.toLowerCase(),
         `${session.address.slice(0, 6)}...${session.address.slice(-4)}`
       );
     }
-
-    // When wallet disconnects, clear store
     if (!isConnected && isAuthenticated) {
       onWalletDisconnected();
     }
-
-    // When session transitions to authenticated, force profile refresh
-    if (prevStatus.current !== "authenticated" && status === "authenticated") {
-      fetchProfile();
-    }
-
-    prevStatus.current = status;
-  }, [isConnected, address, session, status, isAuthenticated, onWalletConnected, onWalletDisconnected, fetchProfile]);
-
-  // Also try fetching profile when wallet is connected but session isn't ready yet
-  // This handles the case where wallet connects before SIWE completes
-  useEffect(() => {
-    if (isConnected && address && !isAuthenticated) {
-      // Poll for session becoming available (SIWE may still be processing)
-      const interval = setInterval(() => {
-        fetchProfile();
-      }, 2000);
-
-      // Stop polling after 10s or when authenticated
-      const timeout = setTimeout(() => clearInterval(interval), 10000);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
-    }
-  }, [isConnected, address, isAuthenticated, fetchProfile]);
+  }, [isConnected, status, session?.address, isAuthenticated, onWalletConnected, onWalletDisconnected]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-vault-black/80 backdrop-blur-md border-b border-vault-elevated">
