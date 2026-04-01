@@ -198,7 +198,59 @@
 
 ---
 
-## Phase 8: Advanced Features (Post-Launch)
+## Phase 8: Admin Dashboard & Backend (Week 6-7)
+🟡 **Admin panel for managing users, vaults, and monitoring activity.**
+
+### Admin Authentication
+- [ ] 🔴 Add `isAdmin` field to User model (or separate AdminUser table)
+- [ ] 🔴 Create admin middleware — only allow users with `isAdmin: true`
+- [ ] 🔴 Admin login page at `/admin/login` (wallet-based, restricted to whitelisted addresses)
+- [ ] 🟡 2FA for admin access (TOTP via authenticator app)
+
+### Admin Dashboard UI (`/admin`)
+- [ ] 🔴 Dashboard overview: total users, total guesses, active vault status, daily active users
+- [ ] 🔴 Real-time stats: guesses per hour chart, new registrations chart
+- [ ] 🟡 System health: DB connection status, error rate, API response times
+
+### User Management (`/admin/users`)
+- [ ] 🔴 User list with search, filter, sort (by wallet, signup date, guess count, balance)
+- [ ] 🔴 User detail page: profile, guess history, task completions, ledger entries
+- [ ] 🟡 Ban/suspend user (disable login + revoke guesses)
+- [ ] 🟡 Manually credit/debit guesses for a user
+- [ ] 🟡 Export user data as CSV
+
+### Vault Management (`/admin/vaults`)
+- [ ] 🔴 View current vault: code (hidden by default), status, stats, time remaining
+- [ ] 🔴 Create new vault (set code, duration, prize amount)
+- [ ] 🔴 Manually rotate vault (archive current, start new)
+- [ ] 🟡 View vault history: all past vaults with winner info
+- [ ] 🟡 View all guesses for a vault (with user info, anonymizable)
+
+### Task Management (`/admin/tasks`)
+- [ ] 🟡 CRUD for tasks: create, edit, enable/disable tasks
+- [ ] 🟡 View task claim statistics (completion rates, most/least popular)
+- [ ] 🟡 Bulk approve/deny social task claims (Twitter follow, Discord join)
+
+### Activity & Audit Logs (`/admin/logs`)
+- [ ] 🟡 Real-time activity feed: guesses, task claims, logins, vault events
+- [ ] 🟡 Suspicious activity alerts: rapid guessing, multi-accounting, unusual patterns
+- [ ] 🟡 Filterable audit log: by user, action type, date range
+- [ ] 🟢 Export logs for compliance
+
+### Admin API Routes
+- [ ] 🔴 `GET /api/admin/stats` — dashboard overview stats
+- [ ] 🔴 `GET /api/admin/users` — paginated user list with filters
+- [ ] 🔴 `GET /api/admin/users/:id` — user detail with history
+- [ ] 🟡 `POST /api/admin/users/:id/ban` — ban/unban user
+- [ ] 🟡 `POST /api/admin/users/:id/credit` — credit/debit guesses
+- [ ] 🔴 `GET /api/admin/vaults` — vault list with stats
+- [ ] 🔴 `POST /api/admin/vaults` — create new vault
+- [ ] 🟡 `POST /api/admin/vaults/:id/rotate` — rotate vault
+- [ ] 🟡 `GET /api/admin/logs` — paginated audit logs
+
+---
+
+## Phase 9: Advanced Features (Post-Launch)
 
 ### Vault Rounds & Progression
 - [ ] 🟢 After crack: new vault with 5-digit code + bigger prize
