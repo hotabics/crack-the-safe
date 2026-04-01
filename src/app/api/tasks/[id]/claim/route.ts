@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { checkTaskClaimRateLimit } from "@/lib/rate-limit";
 
 /** Calculate streak: if lastLoginDate was yesterday, increment; if today, keep; otherwise reset to 1 */
 function calculateStreak(lastLoginDate: string | null, currentStreak: number, today: string): number {
@@ -23,6 +24,15 @@ export async function POST(
     userId = await requireAuth();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit task claims
+  const rl = checkTaskClaimRateLimit(userId);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many claims", retryAfterMs: rl.retryAfterMs },
+      { status: 429 }
+    );
   }
 
   const { id: taskId } = await params;

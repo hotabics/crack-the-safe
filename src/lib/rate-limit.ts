@@ -1,23 +1,37 @@
 const rateLimitMap = new Map<string, number>();
+const taskClaimMap = new Map<string, number>();
 
-const COOLDOWN_MS = 10_000; // 10 seconds
+const GUESS_COOLDOWN_MS = 10_000; // 10 seconds between guesses
+const TASK_CLAIM_COOLDOWN_MS = 5_000; // 5 seconds between task claims
 
-export function checkRateLimit(userId: string): { allowed: boolean; retryAfterMs: number } {
+function checkCooldown(
+  map: Map<string, number>,
+  key: string,
+  cooldownMs: number
+): { allowed: boolean; retryAfterMs: number } {
   const now = Date.now();
-  const lastAttempt = rateLimitMap.get(userId);
+  const last = map.get(key);
 
-  if (lastAttempt && now - lastAttempt < COOLDOWN_MS) {
-    return { allowed: false, retryAfterMs: COOLDOWN_MS - (now - lastAttempt) };
+  if (last && now - last < cooldownMs) {
+    return { allowed: false, retryAfterMs: cooldownMs - (now - last) };
   }
 
-  rateLimitMap.set(userId, now);
+  map.set(key, now);
 
   // Clean up old entries periodically
-  if (rateLimitMap.size > 10_000) {
-    rateLimitMap.forEach((time, key) => {
-      if (now - time > COOLDOWN_MS) rateLimitMap.delete(key);
+  if (map.size > 10_000) {
+    map.forEach((time, k) => {
+      if (now - time > cooldownMs) map.delete(k);
     });
   }
 
   return { allowed: true, retryAfterMs: 0 };
+}
+
+export function checkRateLimit(userId: string) {
+  return checkCooldown(rateLimitMap, userId, GUESS_COOLDOWN_MS);
+}
+
+export function checkTaskClaimRateLimit(userId: string) {
+  return checkCooldown(taskClaimMap, userId, TASK_CLAIM_COOLDOWN_MS);
 }

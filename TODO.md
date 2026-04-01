@@ -11,12 +11,12 @@
 🔴 **These must be completed before any public launch.**
 
 ### Database Setup
-- [x] 🔴 Set up database (SQLite for dev, PostgreSQL for prod)
+- [x] 🔴 Set up PostgreSQL (Supabase — project `oivjhlujewaobxxzxbdi`)
 - [x] 🔴 Create all tables: users, vaults, guesses, guess_ledger, tasks, task_completions
-- [x] 🔴 Add indexes on hot paths (guesses by vault_id, ledger by user_id, wallets by address)
-- [x] 🔴 Set up database migrations (Prisma ORM)
-- [x] 🔴 Seed database with initial vault and tasks
-- [ ] 🟡 Add connection pooling (PgBouncer or Neon's built-in pooler) — for PostgreSQL in prod
+- [x] 🔴 Add indexes on hot paths (guesses by vault_id, ledger by user_id)
+- [x] 🔴 Set up database migrations (Prisma ORM with `crack_the_safe` schema)
+- [x] 🔴 Seed database with initial vault and 8 tasks
+- [ ] 🟡 Add connection pooling (Supabase pooler or PgBouncer)
 
 ### Server-Side Vault Code
 - [x] 🔴 **Move secret code generation to server** — code in VAULT_SECRET_CODE env var
@@ -36,11 +36,12 @@
 
 ### Rate Limiting & Anti-Abuse
 - [x] 🔴 Add rate limiting on `/api/vault/guess` (max 1 guess per 10 seconds per user)
-- [ ] 🔴 Add global rate limiting on all API routes (use Upstash Ratelimit or similar)
+- [x] 🔴 Add global rate limiting on all API routes (60 req/min per IP via middleware)
 - [x] 🔴 Wrap guess submission in a DB transaction (prevent race conditions on balance)
+- [x] 🔴 Request size limits (4KB max) on all non-GET API routes
 - [ ] 🟡 Add CAPTCHA (hCaptcha or Turnstile) after 3 rapid guesses
 - [ ] 🟡 Device fingerprinting to detect multi-accounting
-- [ ] 🟡 IP-based rate limiting as secondary defense
+- [x] 🟡 IP-based rate limiting as secondary defense (middleware)
 
 ---
 
@@ -64,7 +65,7 @@
 - [x] 🔴 Implement session management (NextAuth JWT sessions via httpOnly cookies)
 - [x] 🔴 Create `requireAuth()` middleware for protected API routes (uses getServerSession)
 - [x] 🔴 `POST /api/auth/logout` — logout endpoint
-- [ ] 🟡 Session expiry: 7 days, auto-refresh on activity
+- [x] 🟡 Session expiry: 7 days, auto-refresh every 24h on activity
 
 ### Multi-Wallet Support
 - [ ] 🟡 `POST /api/user/link-wallet` — link additional wallets to same account (with sig verify)
@@ -117,7 +118,7 @@
 ### Server-Side Task Validation
 - [x] 🔴 Move all task claiming to server (atomic transactions)
 - [x] 🔴 Daily login: prevent double-claim per day (DB unique constraint)
-- [ ] 🔴 Streak calculation: server-side, based on last_login_date field
+- [x] 🔴 Streak calculation: server-side, based on lastLoginDate field
 - [x] 🔴 Atomic guess crediting via guess_ledger (INSERT in transaction)
 
 ### Social Task Verification
@@ -128,8 +129,8 @@
 
 ### Anti-Exploit
 - [x] 🔴 Server-side guess balance check (aggregate from ledger) inside transaction
-- [ ] 🔴 Prevent negative balances with CHECK constraint on ledger
-- [ ] 🟡 Rate limit task claims (max 1 claim per task per day per user)
+- [x] 🔴 Prevent negative balances — defensive check in transaction, throws BALANCE_NEGATIVE
+- [x] 🟡 Rate limit task claims (5s cooldown per user)
 - [ ] 🟡 Admin dashboard to monitor suspicious claiming patterns
 
 ---
@@ -138,22 +139,22 @@
 
 ### Authentication Security
 - [x] 🔴 SIWE nonces handled by Reown AppKit + NextAuth CSRF tokens
-- [ ] 🔴 Never log wallet signatures or secret codes
-- [ ] 🔴 CORS: restrict to your domain only
-- [x] 🔴 Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, X-XSS-Protection
-- [ ] 🔴 CSP headers: prevent XSS
+- [x] 🔴 Never log wallet signatures or secret codes (verified — no sensitive data in logs)
+- [x] 🔴 CORS: restrict to crack.scrim42.com and localhost (middleware)
+- [x] 🔴 CSP headers: prevent XSS (next.config.js)
+- [x] 🔴 Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
 - [ ] 🟡 2FA for admin panel access
 
 ### API Security
 - [x] 🔴 Input validation on all endpoints (zod schemas)
 - [x] 🔴 SQL injection prevention (Prisma parameterized queries)
-- [ ] 🔴 Request size limits
+- [x] 🔴 Request size limits (4KB max on non-GET API routes)
 - [ ] 🟡 API key rotation strategy for third-party services
 - [ ] 🟡 Audit logging: every guess, every task claim, every admin action
 
 ### Infrastructure Security
 - [x] 🔴 All secrets in environment variables (not in code)
-- [ ] 🔴 Separate env vars for preview vs production deployments
+- [x] 🔴 Separate env vars for preview vs production deployments (Vercel)
 - [ ] 🟡 Enable Vercel DDoS protection
 - [ ] 🟡 Set up error monitoring (Sentry)
 - [ ] 🟡 Database backups: automated daily snapshots
@@ -220,15 +221,16 @@
 ## Environment Variables Needed
 
 ```env
-# Database
-DATABASE_URL=                    # PostgreSQL connection string (or SQLite file: for dev)
+# Database (Supabase PostgreSQL)
+DATABASE_URL=                    # PostgreSQL connection string
+DIRECT_URL=                      # Direct connection (for migrations)
 
 # Web3
 NEXT_PUBLIC_PROJECT_ID=          # Reown AppKit project ID
 
 # Auth
 NEXTAUTH_SECRET=                 # Min 32 chars, random
-NEXTAUTH_URL=                    # App URL (e.g., http://localhost:3000)
+NEXTAUTH_URL=                    # App URL (e.g., https://crack.scrim42.com)
 
 # Vault
 VAULT_SECRET_CODE=               # 4-digit secret code (server-only)
@@ -246,6 +248,6 @@ NEXT_PUBLIC_POSTHOG_KEY=
 ## Quick Wins (Can Do Today)
 1. ~~Move vault code to a `.env` variable and read server-side only~~ ✅
 2. ~~Add `zod` input validation on the guess endpoint~~ ✅
-3. Add global rate limiting with `@upstash/ratelimit`
+3. ~~Add global rate limiting~~ ✅
 4. Set up Sentry for error monitoring
 5. Add OpenGraph image for social sharing
