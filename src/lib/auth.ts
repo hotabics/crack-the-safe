@@ -5,6 +5,8 @@ import { prisma } from "./db";
 export async function requireAuth(): Promise<string> {
   const session = await getServerSession(authOptions);
 
+  console.log("[AUTH] getServerSession result:", JSON.stringify(session));
+
   if (!session?.address) {
     throw new Error("UNAUTHORIZED");
   }

@@ -13,25 +13,54 @@ export function Header() {
     bluffBalance,
     onWalletConnected,
     onWalletDisconnected,
+    fetchProfile,
   } = useVaultStore();
 
   const { address, isConnected } = useAppKitAccount();
   const { data: session, status } = useSession();
-  const prevConnected = useRef(false);
+  const prevStatus = useRef(status);
 
   // Sync AppKit wallet state with our Zustand store
   useEffect(() => {
-    if (isConnected && address && status === "authenticated" && session?.address) {
+    // When session becomes authenticated and has address, sync store
+    if (status === "authenticated" && session?.address && isConnected && address) {
       onWalletConnected(
         session.address.toLowerCase(),
         `${session.address.slice(0, 6)}...${session.address.slice(-4)}`
       );
-      prevConnected.current = true;
-    } else if (!isConnected && prevConnected.current) {
-      onWalletDisconnected();
-      prevConnected.current = false;
     }
-  }, [isConnected, address, session, status, onWalletConnected, onWalletDisconnected]);
+
+    // When wallet disconnects, clear store
+    if (!isConnected && isAuthenticated) {
+      onWalletDisconnected();
+    }
+
+    // When session transitions to authenticated, force profile refresh
+    if (prevStatus.current !== "authenticated" && status === "authenticated") {
+      fetchProfile();
+    }
+
+    prevStatus.current = status;
+  }, [isConnected, address, session, status, isAuthenticated, onWalletConnected, onWalletDisconnected, fetchProfile]);
+
+  // Also try fetching profile when wallet is connected but session isn't ready yet
+  // This handles the case where wallet connects before SIWE completes
+  useEffect(() => {
+    if (isConnected && address && !isAuthenticated) {
+      // Poll for session becoming available (SIWE may still be processing)
+      const interval = setInterval(() => {
+        fetchProfile();
+      }, 2000);
+
+      // Stop polling after 10s or when authenticated
+      const timeout = setTimeout(() => clearInterval(interval), 10000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, [isConnected, address, isAuthenticated, fetchProfile]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-vault-black/80 backdrop-blur-md border-b border-vault-elevated">

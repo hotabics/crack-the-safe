@@ -54,6 +54,7 @@ interface VaultState {
   // Actions
   submitGuess: (guess: string) => Promise<GuessResultResponse | null>;
   claimTask: (taskId: string) => Promise<void>;
+  buyGuesses: (packageType: "small" | "large") => Promise<boolean>;
   onWalletConnected: (walletAddress: string, displayName: string) => void;
   onWalletDisconnected: () => void;
   disconnect: () => Promise<void>;
@@ -155,6 +156,23 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
   },
 
+  buyGuesses: async (packageType: "small" | "large") => {
+    const state = get();
+    if (!state.isAuthenticated) return false;
+
+    try {
+      const result = await apiClient.buyGuesses(packageType);
+      set({
+        guessBalance: result.newGuessBalance,
+        bluffBalance: result.newBluffBalance,
+      });
+      return true;
+    } catch (error) {
+      console.error("Buy guesses failed:", error);
+      return false;
+    }
+  },
+
   // Called by Header when AppKit + NextAuth session is established
   onWalletConnected: (walletAddress: string, displayName: string) => {
     const state = get();
@@ -221,6 +239,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         isAuthenticated: true,
         displayName: profile.displayName,
         guessBalance: profile.guessBalance,
+        bluffBalance: profile.bluffBalance,
         streakDays: profile.streakDays,
         tasks: profile.tasks.map((t) => ({
           ...t,

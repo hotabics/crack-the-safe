@@ -30,6 +30,7 @@ export interface UserProfileResponse {
   userId: string;
   displayName: string;
   guessBalance: number;
+  bluffBalance: number;
   guessCount: number;
   streakDays: number;
   tasks: Array<{
@@ -88,5 +89,12 @@ export const apiClient = {
 
   getProfile() {
     return request<UserProfileResponse>("/api/user/profile");
+  },
+
+  buyGuesses(packageType: "small" | "large") {
+    return request<{ newGuessBalance: number; newBluffBalance: number; purchased: number }>(
+      "/api/user/buy-guesses",
+      { method: "POST", body: JSON.stringify({ package: packageType }) }
+    );
   },
 };

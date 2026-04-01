@@ -51,6 +51,7 @@ export async function GET() {
       userId: user.id,
       displayName: user.displayName,
       guessBalance: balanceAgg._sum.amount || 0,
+      bluffBalance: user.bluffBalance ?? 0,
       guessCount,
       streakDays: user.streakDays,
       tasks,

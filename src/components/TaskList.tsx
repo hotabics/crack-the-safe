@@ -56,7 +56,7 @@ const DEFAULT_TASKS = [
 ];
 
 export function TaskList() {
-  const { tasks, claimTask, isAuthenticated, streakDays } = useVaultStore();
+  const { tasks, claimTask, buyGuesses, isAuthenticated, streakDays, bluffBalance } = useVaultStore();
 
   // Use fetched tasks if authenticated, otherwise show defaults
   const displayTasks = tasks.length > 0 ? tasks : DEFAULT_TASKS;
@@ -162,6 +162,60 @@ export function TaskList() {
           How it works
         </Link>
       </div>
+
+      {/* Buy Guesses Section */}
+      {isAuthenticated && (
+        <div className="mb-5 p-3 bg-vault-black/50 border border-vault-gold/20 rounded-lg">
+          <h3 className="text-xs font-semibold text-vault-gold uppercase tracking-wider mb-2">
+            Buy Guesses with $BLUFF
+          </h3>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-vault-elevated bg-vault-surface/50">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-zinc-200">3 Guesses</p>
+                <p className="text-xs text-vault-muted">Quick top-up</p>
+              </div>
+              <div className="flex items-center gap-3 ml-3">
+                <span className="font-mono text-xs text-vault-gold font-medium">10 $BLUFF</span>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => buyGuesses("small")}
+                  disabled={bluffBalance < 10}
+                  className="text-xs font-bold px-3 py-1 rounded-full bg-vault-gold text-black
+                             hover:bg-vault-gold-light disabled:opacity-30 disabled:cursor-not-allowed
+                             transition-colors"
+                >
+                  Buy
+                </motion.button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-vault-elevated bg-vault-surface/50">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-zinc-200">50 Guesses</p>
+                <p className="text-xs text-vault-muted">Best value</p>
+              </div>
+              <div className="flex items-center gap-3 ml-3">
+                <span className="font-mono text-xs text-vault-gold font-medium">100 $BLUFF</span>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => buyGuesses("large")}
+                  disabled={bluffBalance < 100}
+                  className="text-xs font-bold px-3 py-1 rounded-full bg-vault-gold text-black
+                             hover:bg-vault-gold-light disabled:opacity-30 disabled:cursor-not-allowed
+                             transition-colors"
+                >
+                  Buy
+                </motion.button>
+              </div>
+            </div>
+            <p className="text-xs text-vault-muted text-center mt-1">
+              Your balance: <span className="text-vault-gold font-mono">{bluffBalance.toLocaleString()}</span> $BLUFF
+            </p>
+          </div>
+        </div>
+      )}
 
       {(["daily", "quest", "bonus"] as const).map((type) => (
         <div key={type} className="mb-4 last:mb-0">

@@ -52,7 +52,7 @@ function ContextProvider({ children, cookies }: { children: ReactNode; cookies: 
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig as Config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
-        <SessionProvider>
+        <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
           {children}
         </SessionProvider>
       </QueryClientProvider>

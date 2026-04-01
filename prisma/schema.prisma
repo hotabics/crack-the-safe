@@ -16,6 +16,7 @@ model User {
   walletAddress  String?  @unique
   lastLoginDate  String?
   streakDays     Int      @default(0)
+  bluffBalance   Int      @default(0)
   createdAt      DateTime @default(now())
 
   guesses         Guess[]
