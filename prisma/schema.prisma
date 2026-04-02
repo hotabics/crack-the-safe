@@ -17,12 +17,17 @@ model User {
   lastLoginDate  String?
   streakDays     Int      @default(0)
   bluffBalance   Int      @default(0)
+  isBanned       Boolean  @default(false)
+  referralCode   String?  @unique
+  referredBy     String?
   createdAt      DateTime @default(now())
 
-  guesses         Guess[]
-  ledgerEntries   GuessLedger[]
-  taskCompletions TaskCompletion[]
-  crackedVaults   Vault[]          @relation("CrackedBy")
+  guesses            Guess[]
+  ledgerEntries      GuessLedger[]
+  taskCompletions    TaskCompletion[]
+  crackedVaults      Vault[]            @relation("CrackedBy")
+  tokenTransactions  TokenTransaction[]
+  auditLogs          AuditLog[]
 
   @@schema("crack_the_safe")
 }
@@ -98,5 +103,36 @@ model TaskCompletion {
   task Task @relation(fields: [taskId], references: [id])
 
   @@unique([userId, taskId, claimedDate])
+  @@schema("crack_the_safe")
+}
+
+model TokenTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  type      String   // "prize_claim", "buy_guesses", "reward", "transfer"
+  txHash    String?  // On-chain transaction hash (null for off-chain)
+  vaultId   String?  // Related vault (for prize claims)
+  metadata  String?  // JSON string for extra context
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@schema("crack_the_safe")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // "guess", "task_claim", "login", "prize_claim", "vault_rotate", "admin_action"
+  details   String?  // JSON string
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([action, createdAt])
+  @@index([userId, createdAt])
   @@schema("crack_the_safe")
 }

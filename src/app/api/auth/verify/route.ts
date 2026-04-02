@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyMessage } from "viem";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 import { SignJWT } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(
@@ -80,6 +81,8 @@ export async function POST(req: Request) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",
     });
+
+    logAudit("login", { address: walletAddress, isNew: !user.createdAt }, user.id);
 
     return res;
   } catch (error) {

@@ -111,6 +111,29 @@ export const apiClient = {
     }>(`/api/user/guesses?page=${page}&limit=${limit}`);
   },
 
+  claimPrize() {
+    return request<{
+      claimed: boolean;
+      amount: number;
+      newBluffBalance: number;
+      transactionId: string;
+      txHash: string | null;
+    }>("/api/vault/claim-prize", { method: "POST" });
+  },
+
+  getReferral() {
+    return request<{ referralCode: string; referralUrl: string; referralCount: number }>(
+      "/api/user/referral"
+    );
+  },
+
+  applyReferral(code: string) {
+    return request<{ ok: boolean; bonusGuesses: number }>(
+      "/api/user/referral",
+      { method: "POST", body: JSON.stringify({ code }) }
+    );
+  },
+
   buyGuesses(packageType: "small" | "large") {
     return request<{ newGuessBalance: number; newBluffBalance: number; purchased: number }>(
       "/api/user/buy-guesses",

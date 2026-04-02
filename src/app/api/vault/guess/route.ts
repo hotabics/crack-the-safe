@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { evaluateGuessServer } from "@/lib/vault-server";
 import { guessSchema } from "@/lib/validations";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(req: Request) {
   let userId: string;
@@ -107,6 +108,13 @@ export async function POST(req: Request) {
         isVaultCracked: evaluation.feedback === "cracked",
       };
     });
+
+    logAudit("guess", {
+      guess: result.guess,
+      feedback: result.feedback,
+      correctPositions: result.correctPositions,
+      cracked: result.isVaultCracked,
+    }, userId);
 
     return NextResponse.json(result);
   } catch (error: unknown) {
