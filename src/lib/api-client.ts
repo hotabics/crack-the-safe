@@ -91,6 +91,26 @@ export const apiClient = {
     return request<UserProfileResponse>("/api/user/profile");
   },
 
+  getHeat() {
+    return request<{ heatLevel: number; totalAttempts: number; totalPlayers: number; codeLength?: number }>(
+      "/api/vault/heat"
+    );
+  },
+
+  getUserGuesses(page = 1, limit = 20) {
+    return request<{
+      guesses: Array<{
+        id: string;
+        guess: string;
+        correctPositions: number;
+        correctDigits: number;
+        feedback: string;
+        createdAt: string;
+      }>;
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/api/user/guesses?page=${page}&limit=${limit}`);
+  },
+
   buyGuesses(packageType: "small" | "large") {
     return request<{ newGuessBalance: number; newBluffBalance: number; purchased: number }>(
       "/api/user/buy-guesses",

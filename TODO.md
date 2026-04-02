@@ -31,8 +31,8 @@
 - [x] 🔴 `GET /api/vault/hints` — return last 50 anonymous guesses with feedback
 - [x] 🔴 `GET /api/user/profile` — return guess balance, tasks, completion status
 - [x] 🔴 `POST /api/tasks/:id/claim` — validate and credit guesses atomically
-- [ ] 🟡 `GET /api/vault/heat` — current heat meter level
-- [ ] 🟡 `GET /api/user/guesses` — paginated user guess history
+- [x] 🟡 `GET /api/vault/heat` — current heat meter level
+- [x] 🟡 `GET /api/user/guesses` — paginated user guess history
 
 ### Rate Limiting & Anti-Abuse
 - [x] 🔴 Add rate limiting on `/api/vault/guess` (max 1 guess per 10 seconds per user)
@@ -78,18 +78,18 @@
 ## Phase 3: Real-Time Features (Week 3-4)
 
 ### WebSocket / Real-Time Hint Board
-- [ ] 🟡 Set up Redis (Upstash recommended for serverless)
-- [ ] 🟡 Implement Socket.io server or use Vercel's edge functions with SSE
-- [ ] 🟡 Broadcast new hints to all connected clients anonymously
-- [ ] 🟡 Real-time heat meter updates when someone gets closer
-- [ ] 🟡 "Vault Cracked" event broadcast to all users
-- [ ] 🟢 Alternative: Use Supabase Realtime or Pusher if Socket.io is too complex for serverless
+- [x] 🟡 Implement SSE endpoint (`GET /api/vault/events`) for real-time updates
+- [x] 🟡 Broadcast new hints to all connected clients anonymously (via SSE polling)
+- [x] 🟡 Real-time heat meter updates when someone gets closer
+- [x] 🟡 "Vault Cracked" event broadcast to all users
+- [x] 🟡 Client-side `useVaultEvents` hook with auto-reconnect
 
 ### Vault Lifecycle
-- [ ] 🟡 Implement vault rotation (cron job or Vercel Cron: reset code every 7 days)
-- [ ] 🟡 Archive old vault + guesses when rotating
+- [x] 🟡 Implement vault rotation (Vercel Cron: daily at midnight UTC)
+- [x] 🟡 Archive old vault + guesses when rotating (mark as cracked)
+- [x] 🟡 Auto-generate new 6-digit code on rotation
 - [ ] 🟡 If nobody cracks it, roll prize into next vault (growing pot)
-- [ ] 🟡 Announce new vault via WebSocket to all clients
+- [x] 🟡 Announce new vault via SSE to all clients
 
 ---
 

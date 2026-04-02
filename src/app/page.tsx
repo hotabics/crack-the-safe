@@ -13,12 +13,16 @@ import { TaskList } from "@/components/TaskList";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Stats } from "@/components/Stats";
 import { useVaultStore } from "@/stores/vaultStore";
+import { useVaultEvents } from "@/hooks/useVaultEvents";
 
 type Tab = "hints" | "history" | "tasks";
 
 export default function Home() {
   const [mobileTab, setMobileTab] = useState<Tab>("hints");
   const { fetchVaultState, fetchHints, fetchProfile } = useVaultStore();
+
+  // Real-time SSE connection for live hints + vault events
+  useVaultEvents();
 
   useEffect(() => {
     fetchVaultState();
