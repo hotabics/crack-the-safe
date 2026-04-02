@@ -1,13 +1,11 @@
 'use client'
 
-import { wagmiAdapter, projectId, networks } from '@/config'
-import { siweConfig } from '@/config/siwe'
+import { wagmiAdapter, projectId } from '@/config'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
 import { mainnet } from '@reown/appkit/networks'
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
-import { SessionProvider } from 'next-auth/react'
 
 // Set up queryClient
 const queryClient = new QueryClient()
@@ -24,7 +22,7 @@ const metadata = {
   icons: ['https://crack.scrim42.com/icon.png']
 }
 
-// Create the modal
+// Create the modal (no SIWE — we handle auth manually via /api/auth/verify)
 createAppKit({
   adapters: [wagmiAdapter],
   projectId,
@@ -36,7 +34,6 @@ createAppKit({
     email: false,
     socials: [],
   },
-  siweConfig,
   themeMode: 'dark',
   themeVariables: {
     '--w3m-accent': '#F59E0B',
@@ -52,9 +49,7 @@ function ContextProvider({ children, cookies }: { children: ReactNode; cookies: 
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig as Config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
-        <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
-          {children}
-        </SessionProvider>
+        {children}
       </QueryClientProvider>
     </WagmiProvider>
   )

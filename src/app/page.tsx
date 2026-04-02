@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
+import { AffiliateBanner } from "@/components/AffiliateBanner";
 import { VaultDoor } from "@/components/VaultDoor";
 import { SafeDial } from "@/components/SafeDial";
 import { HeatMeter } from "@/components/HeatMeter";
@@ -45,14 +46,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Beach vault illustration */}
-          <div className="relative w-full max-w-xl">
-            <img
-              src="/beach-vault.svg"
-              alt="Beach vault with gold coins"
-              className="w-full h-auto rounded-2xl border border-vault-elevated shadow-2xl"
-            />
-          </div>
+          {/* Affiliate Banner */}
+          <AffiliateBanner />
 
           {/* Vault visual */}
           <VaultDoor />

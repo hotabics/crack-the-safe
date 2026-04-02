@@ -1,24 +1,28 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "./auth-options";
-import { prisma } from "./db";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.NEXTAUTH_SECRET || "fallback-secret-change-me"
+);
 
 export async function requireAuth(): Promise<string> {
-  const session = await getServerSession(authOptions);
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session_token")?.value;
 
-  console.log("[AUTH] getServerSession result:", JSON.stringify(session));
-
-  if (!session?.address) {
+  if (!token) {
     throw new Error("UNAUTHORIZED");
   }
 
-  const walletAddress = session.address.toLowerCase();
-  const user = await prisma.user.findUnique({
-    where: { walletAddress },
-  });
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const userId = payload.userId as string;
 
-  if (!user) {
+    if (!userId) {
+      throw new Error("UNAUTHORIZED");
+    }
+
+    return userId;
+  } catch {
     throw new Error("UNAUTHORIZED");
   }
-
-  return user.id;
 }

@@ -2,8 +2,7 @@
 
 import { useVaultStore } from "@/stores/vaultStore";
 import { useAppKitAccount } from "@reown/appkit/react";
-import { useEffect, useRef, useCallback, useState } from "react";
-import { useSession, getCsrfToken, signIn } from "next-auth/react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useWalletClient } from "wagmi";
 import Link from "next/link";
 
@@ -18,30 +17,24 @@ export function Header() {
   } = useVaultStore();
 
   const { address, isConnected } = useAppKitAccount();
-  const { data: session, status, update: updateSession } = useSession();
   const { data: walletClient } = useWalletClient();
   const siweAttempted = useRef(false);
   const [signingIn, setSigningIn] = useState(false);
 
-  // Manual SIWE sign-in
-  const doSiweSignIn = useCallback(async () => {
-    if (!address || !walletClient || siweAttempted.current || signingIn) return;
+  const doSignIn = useCallback(async () => {
+    if (!address || !walletClient || signingIn) return;
     siweAttempted.current = true;
     setSigningIn(true);
 
     try {
-      const nonce = await getCsrfToken();
-      if (!nonce) {
-        siweAttempted.current = false;
-        setSigningIn(false);
-        return;
-      }
+      // 1. Get nonce from server
+      const nonceRes = await fetch("/api/auth/nonce");
+      const { nonce } = await nonceRes.json();
+      if (!nonce) throw new Error("No nonce");
 
-      const now = new Date();
+      // 2. Build EIP-4361 message
       const domain = window.location.host;
       const uri = window.location.origin;
-
-      // Build EIP-4361 message manually
       const message = [
         `${domain} wants you to sign in with your Ethereum account:`,
         address,
@@ -52,64 +45,59 @@ export function Header() {
         `Version: 1`,
         `Chain ID: 1`,
         `Nonce: ${nonce}`,
-        `Issued At: ${now.toISOString()}`,
+        `Issued At: ${new Date().toISOString()}`,
       ].join("\n");
 
+      // 3. Request signature from wallet
       const signature = await walletClient.signMessage({ message });
 
-      const result = await signIn("credentials", {
-        message,
-        signature,
-        redirect: false,
-        callbackUrl: "/",
+      // 4. Verify on server
+      const verifyRes = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, signature, address }),
       });
 
-      if (result?.ok) {
-        await updateSession();
-        // Small delay for session cookie to propagate
-        setTimeout(() => fetchProfile(), 500);
+      const data = await verifyRes.json();
+
+      if (data.ok) {
+        onWalletConnected(
+          data.address,
+          data.displayName
+        );
+        // Fetch full profile after short delay for cookie to set
+        setTimeout(() => fetchProfile(), 300);
       } else {
-        console.error("[Header] signIn result:", result);
+        console.error("[Auth] Verify failed:", data.error);
         siweAttempted.current = false;
       }
     } catch (e) {
-      console.error("[Header] SIWE sign-in failed:", e);
+      console.error("[Auth] Sign-in error:", e);
       siweAttempted.current = false;
     } finally {
       setSigningIn(false);
     }
-  }, [address, walletClient, signingIn, updateSession, fetchProfile]);
+  }, [address, walletClient, signingIn, onWalletConnected, fetchProfile]);
 
-  // Auto-trigger SIWE when wallet connects and walletClient is ready
+  // Auto-trigger sign-in when wallet and walletClient are both ready
   useEffect(() => {
     if (
       isConnected &&
       address &&
       walletClient &&
-      status !== "loading" &&
-      !session?.address &&
+      !isAuthenticated &&
       !siweAttempted.current &&
       !signingIn
     ) {
-      doSiweSignIn();
+      doSignIn();
     }
     if (!isConnected) {
       siweAttempted.current = false;
+      if (isAuthenticated) {
+        onWalletDisconnected();
+      }
     }
-  }, [isConnected, address, walletClient, status, session?.address, signingIn, doSiweSignIn]);
-
-  // Sync session to store
-  useEffect(() => {
-    if (status === "authenticated" && session?.address && isConnected) {
-      onWalletConnected(
-        session.address.toLowerCase(),
-        `${session.address.slice(0, 6)}...${session.address.slice(-4)}`
-      );
-    }
-    if (!isConnected && isAuthenticated) {
-      onWalletDisconnected();
-    }
-  }, [isConnected, status, session?.address, isAuthenticated, onWalletConnected, onWalletDisconnected]);
+  }, [isConnected, address, walletClient, isAuthenticated, signingIn, doSignIn, onWalletDisconnected]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-vault-black/80 backdrop-blur-md border-b border-vault-elevated">
@@ -143,10 +131,10 @@ export function Header() {
             </div>
           )}
 
-          {/* Manual sign-in button when wallet connected but not authenticated */}
+          {/* Manual sign-in button */}
           {isConnected && !isAuthenticated && !signingIn && (
             <button
-              onClick={() => { siweAttempted.current = false; doSiweSignIn(); }}
+              onClick={() => { siweAttempted.current = false; doSignIn(); }}
               className="text-xs font-bold px-3 py-1.5 rounded-full bg-vault-gold text-black hover:bg-vault-gold-light transition-colors"
             >
               Sign In
