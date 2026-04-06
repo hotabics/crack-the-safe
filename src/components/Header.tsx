@@ -2,7 +2,7 @@
 
 import { useVaultStore } from "@/stores/vaultStore";
 import { useAppKitAccount } from "@reown/appkit/react";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useWalletClient } from "wagmi";
 import { useBluffBalance } from "@/hooks/useBluffBalance";
 import Link from "next/link";
@@ -12,6 +12,7 @@ export function Header() {
     isAuthenticated,
     guessBalance,
     bluffBalance,
+    walletAddress,
     onWalletConnected,
     onWalletDisconnected,
     fetchProfile,
@@ -19,38 +20,50 @@ export function Header() {
 
   const { address, isConnected } = useAppKitAccount();
   const { data: walletClient } = useWalletClient();
-  const { balance: onChainBluff } = useBluffBalance(address);
-  const siweAttempted = useRef(false);
+  const { balance: onChainBluff } = useBluffBalance(walletAddress || undefined);
   const [signingIn, setSigningIn] = useState(false);
+  const [signError, setSignError] = useState<string | null>(null);
+
+  // Try to restore session from cookie on mount (no wallet signature needed)
+  useEffect(() => {
+    if (!isAuthenticated && isConnected) {
+      fetchProfile();
+    }
+  }, [isAuthenticated, isConnected, fetchProfile]);
+
+  // Clear state when wallet disconnects
+  useEffect(() => {
+    if (!isConnected && isAuthenticated) {
+      onWalletDisconnected();
+    }
+  }, [isConnected, isAuthenticated, onWalletDisconnected]);
 
   const doSignIn = useCallback(async () => {
     if (!address || !walletClient || signingIn) return;
-    siweAttempted.current = true;
     setSigningIn(true);
+    setSignError(null);
 
     try {
-      // 1. Get nonce from server
+      // 1. Get nonce
       const nonceRes = await fetch("/api/auth/nonce");
       const { nonce } = await nonceRes.json();
-      if (!nonce) throw new Error("No nonce");
+      if (!nonce) throw new Error("Failed to get nonce");
 
-      // 2. Build EIP-4361 message
-      const domain = window.location.host;
-      const uri = window.location.origin;
+      // 2. Build SIWE message
       const message = [
-        `${domain} wants you to sign in with your Ethereum account:`,
+        `${window.location.host} wants you to sign in with your Ethereum account:`,
         address,
         "",
         "Sign in to Crack the Safe",
         "",
-        `URI: ${uri}`,
+        `URI: ${window.location.origin}`,
         `Version: 1`,
         `Chain ID: 1`,
         `Nonce: ${nonce}`,
         `Issued At: ${new Date().toISOString()}`,
       ].join("\n");
 
-      // 3. Request signature from wallet
+      // 3. Request wallet signature (this triggers MetaMask popup)
       const signature = await walletClient.signMessage({ message });
 
       // 4. Verify on server
@@ -63,43 +76,23 @@ export function Header() {
       const data = await verifyRes.json();
 
       if (data.ok) {
-        onWalletConnected(
-          data.address,
-          data.displayName
-        );
-        // Fetch full profile after short delay for cookie to set
+        onWalletConnected(data.address, data.displayName);
         setTimeout(() => fetchProfile(), 300);
       } else {
-        console.error("[Auth] Verify failed:", data.error);
-        siweAttempted.current = false;
+        setSignError(data.error || "Sign-in failed");
       }
     } catch (e) {
-      console.error("[Auth] Sign-in error:", e);
-      siweAttempted.current = false;
+      const msg = e instanceof Error ? e.message : "Sign-in failed";
+      // User rejected = not an error
+      if (msg.includes("reject") || msg.includes("denied") || msg.includes("cancel")) {
+        setSignError(null);
+      } else {
+        setSignError(msg.length > 50 ? "Sign-in failed. Try again." : msg);
+      }
     } finally {
       setSigningIn(false);
     }
   }, [address, walletClient, signingIn, onWalletConnected, fetchProfile]);
-
-  // Auto-trigger sign-in when wallet and walletClient are both ready
-  useEffect(() => {
-    if (
-      isConnected &&
-      address &&
-      walletClient &&
-      !isAuthenticated &&
-      !siweAttempted.current &&
-      !signingIn
-    ) {
-      doSignIn();
-    }
-    if (!isConnected) {
-      siweAttempted.current = false;
-      if (isAuthenticated) {
-        onWalletDisconnected();
-      }
-    }
-  }, [isConnected, address, walletClient, isAuthenticated, signingIn, doSignIn, onWalletDisconnected]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-vault-black/80 backdrop-blur-md border-b border-vault-elevated">
@@ -142,17 +135,30 @@ export function Header() {
             </div>
           )}
 
-          {/* Manual sign-in button */}
-          {isConnected && !isAuthenticated && !signingIn && (
+          {/* Sign In button — only shown when wallet connected but not authenticated */}
+          {isConnected && !isAuthenticated && (
             <button
-              onClick={() => { siweAttempted.current = false; doSignIn(); }}
-              className="text-xs font-bold px-3 py-1.5 rounded-full bg-vault-gold text-black hover:bg-vault-gold-light transition-colors"
+              onClick={doSignIn}
+              disabled={signingIn || !walletClient}
+              className="text-xs font-bold px-4 py-2 rounded-full bg-vault-gold text-black
+                         hover:bg-vault-gold-light disabled:opacity-50 transition-colors
+                         flex items-center gap-1.5"
             >
-              Sign In
+              {signingIn ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  Signing...
+                </>
+              ) : !walletClient ? (
+                "Loading..."
+              ) : (
+                "Sign In"
+              )}
             </button>
           )}
-          {signingIn && (
-            <span className="text-xs text-vault-gold animate-pulse">Signing...</span>
+
+          {signError && (
+            <span className="text-[10px] text-red-400 max-w-[120px] truncate">{signError}</span>
           )}
 
           <Link href="/terms" className="text-xs text-vault-muted hover:text-zinc-300 transition-colors hidden sm:block">
