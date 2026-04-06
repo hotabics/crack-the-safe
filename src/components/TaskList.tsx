@@ -33,10 +33,13 @@ const SELF_CLAIMABLE = new Set(["daily-login"]);
 // Tasks that require a streak (show progress instead of claim)
 const STREAK_TASKS = new Set(["streak-7"]);
 
+// Tasks with OAuth verification flow (server-side check)
+const VERIFIED_TASKS = new Set(["follow-x", "join-discord"]);
+
 // Tasks needing external verification (social, on-chain) — show as "Go" link or info
 const EXTERNAL_TASKS: Record<string, string | null> = {
-  "follow-x": "https://x.com/CrackTheSafe",
-  "join-discord": "https://discord.gg/crackthesafe",
+  "follow-x": "/api/tasks/verify-twitter",  // OAuth flow
+  "join-discord": "/api/tasks/verify-discord",  // OAuth flow
   "join-telegram": "https://t.me/crackthesafe",
   "partner-offer": null,
   "refer-friend": null,
@@ -126,6 +129,33 @@ export function TaskList() {
         <span className="text-xs text-vault-muted font-mono px-3 py-1">
           {streakDays}/7 days
         </span>
+      );
+    }
+
+    // Verified tasks (OAuth flow)
+    if (VERIFIED_TASKS.has(task.id)) {
+      const verifyUrl = EXTERNAL_TASKS[task.id];
+      return (
+        <button
+          onClick={async () => {
+            if (!verifyUrl) return;
+            try {
+              const res = await fetch(verifyUrl);
+              const data = await res.json();
+              if (data.redirectUrl) {
+                window.location.href = data.redirectUrl;
+              } else if (data.error) {
+                alert(data.error);
+              }
+            } catch {
+              alert("Verification not available yet");
+            }
+          }}
+          className="text-xs font-bold px-3 py-1 rounded-full bg-vault-surface text-vault-gold
+                     border border-vault-gold/30 hover:bg-vault-gold/10 transition-colors"
+        >
+          Verify
+        </button>
       );
     }
 
