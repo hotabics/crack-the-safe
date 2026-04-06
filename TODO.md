@@ -83,13 +83,13 @@
 
 ---
 
-## Phase 7: UX & Polish
+## Phase 7: UX & Polish ✅
 
-- [ ] 🟡 Vault crack animation + confetti
-- [ ] 🟡 Share guess to Twitter/X
-- [ ] 🟡 Leaderboard (closest guesses, most guesses, longest streak)
-- [ ] 🟡 OpenGraph meta tags for social sharing
-- [ ] 🟡 PWA manifest for mobile
+- [x] Vault crack animation (confetti burst, door swing, light beam, handle rotation)
+- [x] Share guess to Twitter/X (pre-filled tweet with feedback)
+- [x] Leaderboard: closest guesses, most active, top streaks (`GET /api/leaderboard`)
+- [x] OpenGraph + Twitter Card meta tags
+- [x] PWA manifest + Apple mobile web app meta
 - [ ] 🟢 Sound effects
 - [ ] 🟢 Three.js vault door
 
