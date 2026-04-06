@@ -4,6 +4,7 @@ import { useVaultStore } from "@/stores/vaultStore";
 import { useAppKitAccount } from "@reown/appkit/react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useWalletClient } from "wagmi";
+import { useBluffBalance } from "@/hooks/useBluffBalance";
 import Link from "next/link";
 
 export function Header() {
@@ -18,6 +19,7 @@ export function Header() {
 
   const { address, isConnected } = useAppKitAccount();
   const { data: walletClient } = useWalletClient();
+  const { balance: onChainBluff } = useBluffBalance(address);
   const siweAttempted = useRef(false);
   const [signingIn, setSigningIn] = useState(false);
 
@@ -125,8 +127,17 @@ export function Header() {
                 <span className="text-vault-muted">guesses</span>
               </div>
               <div className="flex items-center gap-1.5 bg-vault-surface px-3 py-1.5 rounded-full border border-vault-elevated">
-                <span className="font-mono text-vault-gold-light font-medium">{bluffBalance.toLocaleString()}</span>
+                <span className="font-mono text-vault-gold-light font-medium">
+                  {onChainBluff > 0
+                    ? Math.floor(onChainBluff).toLocaleString()
+                    : bluffBalance.toLocaleString()}
+                </span>
                 <span className="text-vault-muted">$BLUFF</span>
+                {onChainBluff > 0 && bluffBalance > 0 && (
+                  <span className="text-vault-muted text-[10px]" title="In-game balance">
+                    +{bluffBalance.toLocaleString()}
+                  </span>
+                )}
               </div>
             </div>
           )}
