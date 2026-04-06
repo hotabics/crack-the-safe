@@ -67,8 +67,8 @@
 - [x] Referral system: `GET/POST /api/user/referral` (unique codes, 3 guesses each)
 - [x] Audit logging: `logAudit()` on guess, login, prize, referral
 - [x] 10 tasks seeded (daily, quest, bonus)
-- [ ] 🟡 Twitter/X follow verification
-- [ ] 🟡 Discord join verification via OAuth
+- [x] 🟡 Twitter/X follow verification (OAuth 2.0 PKCE + API v2 follow check)
+- [x] 🟡 Discord join verification (OAuth + guild membership check)
 
 ---
 
