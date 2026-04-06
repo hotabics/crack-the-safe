@@ -17,6 +17,7 @@ model User {
   lastLoginDate  String?
   streakDays     Int      @default(0)
   bluffBalance   Int      @default(0)
+  isAdmin        Boolean  @default(false)
   isBanned       Boolean  @default(false)
   referralCode   String?  @unique
   referredBy     String?
