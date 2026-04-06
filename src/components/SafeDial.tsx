@@ -160,6 +160,19 @@ export function SafeDial() {
           >
             <span className="font-mono mr-2">{lastResult.guess}</span>
             {getFeedbackLabel(lastResult)}
+            <a
+              href={`https://x.com/intent/tweet?text=${encodeURIComponent(
+                lastResult.feedback === "cracked"
+                  ? `I just CRACKED the vault and won 1,000,000 $BLUFF! 🔓💰\n\nhttps://crack.scrim42.com`
+                  : `I got ${lastResult.correctPositions} correct position${lastResult.correctPositions !== 1 ? "s" : ""} trying to Crack the Safe! 🔐\n\n${lastResult.feedback.toUpperCase()} — Can you crack it?\nhttps://crack.scrim42.com`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 ml-3 text-xs text-vault-muted hover:text-zinc-300 transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Share
+            </a>
           </motion.div>
         )}
       </AnimatePresence>

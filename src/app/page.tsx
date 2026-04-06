@@ -12,6 +12,7 @@ import { GuessHistory } from "@/components/GuessHistory";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { TaskList } from "@/components/TaskList";
 import { HowItWorks } from "@/components/HowItWorks";
+import { Leaderboard } from "@/components/Leaderboard";
 import { Stats } from "@/components/Stats";
 import { useVaultStore } from "@/stores/vaultStore";
 import { useVaultEvents } from "@/hooks/useVaultEvents";
@@ -81,6 +82,7 @@ export default function Home() {
           </div>
           <div className="space-y-6">
             <GuessHistory />
+            <Leaderboard />
             <CountdownTimer />
           </div>
         </section>
