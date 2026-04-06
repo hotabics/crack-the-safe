@@ -8,123 +8,84 @@
 ---
 
 ## Phase 1: Infrastructure & Security ✅
-🔴 **Completed.**
 
-### Database Setup
-- [x] 🔴 Set up PostgreSQL (Supabase — project `oivjhlujewaobxxzxbdi`)
-- [x] 🔴 Create all tables: users, vaults, guesses, guess_ledger, tasks, task_completions
-- [x] 🔴 Add indexes on hot paths (guesses by vault_id, ledger by user_id)
-- [x] 🔴 Set up database schema (Prisma ORM with `crack_the_safe` schema)
-- [x] 🔴 Seed database with initial vault and 10 tasks
-- [ ] 🟡 Add connection pooling (Supabase pooler or PgBouncer)
-
-### Server-Side Vault Code
-- [x] 🔴 Move secret code to server (VAULT_SECRET_CODE env var)
-- [x] 🔴 Server-side guess evaluation (never send code to client)
-- [x] 🔴 Constant-time comparison to prevent timing attacks
-- [x] 🔴 Hash stored code with SHA-256
-
-### API Routes
-- [x] 🔴 `POST /api/vault/guess` — validate auth, check balance, evaluate, return feedback
-- [x] 🔴 `GET /api/vault/current` — vault metadata, heat level, expiry
-- [x] 🔴 `GET /api/vault/hints` — last 50 anonymous guesses
-- [x] 🔴 `GET /api/user/profile` — balance, $BLUFF, tasks, streak
-- [x] 🔴 `POST /api/tasks/:id/claim` — atomic task claiming
-- [x] 🟡 `GET /api/vault/heat` — heat meter level + stats
-- [x] 🟡 `GET /api/user/guesses` — paginated user guess history
-- [x] 🟡 `POST /api/user/buy-guesses` — buy guesses with $BLUFF (3 for 10, 50 for 100)
-
-### Rate Limiting & Anti-Abuse
-- [x] 🔴 Rate limit on guess (10s per user) + global (60 req/min per IP)
-- [x] 🔴 DB transaction for guess submission (no race conditions)
-- [x] 🔴 Request size limits (4KB max)
-- [x] 🟡 Task claim rate limiting (5s cooldown)
-- [ ] 🟡 Add CAPTCHA after rapid guesses
-- [ ] 🟡 Device fingerprinting for multi-accounting
+- [x] PostgreSQL on Supabase + Prisma ORM
+- [x] All API routes: guess, vault, profile, tasks, heat, user guesses, buy guesses
+- [x] Server-side vault code (SHA-256, constant-time comparison)
+- [x] Rate limiting (per-user guess 10s, global 60/min, task claim 5s)
+- [x] Request size limits, DB transactions, zod validation
+- [ ] 🟡 Connection pooling (Supabase pooler)
+- [ ] 🟡 CAPTCHA after rapid guesses
+- [ ] 🟡 Device fingerprinting
 
 ---
 
-## Phase 2: Web3 Wallet Authentication ✅
+## Phase 2: Web3 Wallet Authentication
 
-### EVM Wallets
-- [x] 🔴 Reown AppKit with wagmi/viem (MetaMask, Coinbase, WalletConnect)
-- [x] 🔴 Custom SIWE auth flow: nonce → sign → verify → JWT session
-- [x] 🔴 `GET /api/auth/nonce` + `POST /api/auth/verify` (standalone, no NextAuth dependency)
-- [x] 🔴 JWT session in httpOnly cookie (7-day expiry, jose library)
+### EVM Wallets ✅
+- [x] Reown AppKit + wagmi/viem (MetaMask, Coinbase, WalletConnect)
+- [x] Custom SIWE auth: `GET /api/auth/nonce` + `POST /api/auth/verify`
+- [x] JWT session in httpOnly cookie (7-day, jose library)
 
-### Solana
+### Solana — IN PROGRESS
 - [ ] 🟡 @solana/wallet-adapter-react + tweetnacl
 - [ ] 🟡 `POST /api/auth/verify/solana` — Ed25519 signature verification
-- [ ] 🟡 Chain selector tabs (EVM / Solana)
+- [ ] 🟡 Chain selector UI (EVM / Solana tabs)
 
 ### Multi-Wallet Support
-- [ ] 🟡 Link/unlink additional wallets
+- [ ] 🟡 `POST /api/user/link-wallet` — link additional wallets
+- [ ] 🟡 `GET /api/user/wallets` — list all linked wallets
+- [ ] 🟡 `DELETE /api/user/wallets/:id` — unlink wallet (keep at least one)
 - [ ] 🟡 Prevent cross-user wallet linking
 
 ---
 
 ## Phase 3: Real-Time Features ✅
 
-### Real-Time Hint Board
-- [x] 🟡 `GET /api/vault/events` — SSE endpoint with auto-reconnect
-- [x] 🟡 Real-time hints broadcast (anonymous, every 3s poll)
-- [x] 🟡 Real-time heat meter updates
-- [x] 🟡 "Vault Cracked" event broadcast
-- [x] 🟡 `useVaultEvents` client hook with auto-reconnect
-
-### Vault Lifecycle
-- [x] 🟡 Vercel Cron vault rotation (daily at midnight UTC)
-- [x] 🟡 Archive expired vaults, auto-generate new 6-digit code
+- [x] SSE endpoint (`/api/vault/events`) with auto-reconnect
+- [x] Real-time hints, heat updates, vault cracked broadcast
+- [x] `useVaultEvents` client hook
+- [x] Vercel Cron vault rotation (daily midnight UTC)
+- [x] Archive expired vaults, auto-generate new 6-digit code
 - [ ] 🟡 Growing pot: roll prize into next vault if uncracked
 
 ---
 
-## Phase 4: $BLUFF Token Integration (Week 4-5)
+## Phase 4: $BLUFF Token Integration ✅
 
-### Smart Contract
-- [ ] 🟡 Deploy ERC-20 $BLUFF token contract
-- [ ] 🟡 Deploy PrizeVault contract to hold the 1M $BLUFF
-- [ ] 🟡 Audit smart contracts (Slither/Mythril static analysis)
+### Smart Contracts (Base Mainnet)
+- [x] BLUFF ERC-20: `0x287a19FbeA6C6A400Bf3cc8331F2a7c9aE59e57a` (100M supply)
+- [x] PrizeVault: `0x08BAEee1a025156d42AB97E6113f341080D96280` (1M BLUFF locked)
+- [x] 8/8 Foundry tests passing
+- [ ] 🟡 Audit (Slither/Mythril static analysis)
+- [ ] 🟡 Verify on BaseScan
 
-### On-Chain Prize Claim
-- [ ] 🟡 `POST /api/vault/claim-prize` — server-side signed transfer to winner
-- [ ] 🟡 Record transaction in token_transactions table
-- [ ] 🟡 Display on-chain TX link after claim
-
-### Balance Display
-- [ ] 🟡 Show both on-chain and off-chain $BLUFF balances in header
-- [ ] 🟢 Token-gated tasks (Hold 100+ $BLUFF)
+### On-Chain Integration ✅
+- [x] `POST /api/vault/claim-prize` calls PrizeVault.claimPrize() on-chain
+- [x] `useBluffBalance` hook reads ERC-20 balance via wagmi
+- [x] Header shows on-chain + in-game $BLUFF
+- [x] TokenTransaction model tracks all $BLUFF movements
+- [x] Fallback to off-chain credit if no signer key
 
 ---
 
 ## Phase 5: Task System Hardening
 
-### Server-Side Task Validation
-- [x] 🔴 All task claiming server-side with atomic transactions
-- [x] 🔴 Daily login: prevent double-claim (DB unique constraint)
-- [x] 🔴 Streak calculation server-side
-- [x] 🔴 Atomic guess crediting via guess_ledger
-
-### Social Task Verification
+- [x] Server-side task claiming with atomic transactions
+- [x] Daily login unique constraint + streak calculation
+- [x] Referral system: `GET/POST /api/user/referral` (unique codes, 3 guesses each)
+- [x] Audit logging: `logAudit()` on guess, login, prize, referral
+- [x] AuditLog + TokenTransaction DB models
 - [ ] 🟡 Twitter/X follow verification
-- [ ] 🟡 Discord join verification via bot + OAuth
-- [ ] 🟡 Referral system: unique codes, track conversions
-
-### Anti-Exploit
-- [x] 🔴 Server-side balance check in transaction
-- [x] 🟡 Rate limit task claims
+- [ ] 🟡 Discord join verification via OAuth
 - [ ] 🟡 Admin dashboard for suspicious patterns
 
 ---
 
 ## Phase 6: Security Hardening
 
-- [x] 🔴 CORS restriction (middleware)
-- [x] 🔴 CSP headers (next.config.js)
-- [x] 🔴 Security headers (X-Frame-Options, etc.)
-- [x] 🔴 Input validation (zod)
-- [x] 🔴 No secrets in code
-- [ ] 🟡 Audit logging
+- [x] CORS, CSP, security headers, input validation
+- [x] Audit logging integrated
 - [ ] 🟡 Error monitoring (Sentry)
 - [ ] 🟡 Database backups
 
@@ -132,33 +93,31 @@
 
 ## Phase 7: UX & Polish
 
-- [ ] 🟡 Vault door open animation on crack
-- [ ] 🟡 Confetti/particle effect on win
-- [ ] 🟡 Share guess result to Twitter/X
-- [ ] 🟡 Leaderboard: closest guesses, most guesses, longest streak
-- [ ] 🟡 OpenGraph meta tags for social sharing
-- [ ] 🟡 PWA manifest for mobile
+- [ ] 🟡 Vault crack animation + confetti
+- [ ] 🟡 Share guess to Twitter/X
+- [ ] 🟡 Leaderboard
+- [ ] 🟡 OpenGraph meta tags
+- [ ] 🟡 PWA manifest
 
 ---
 
 ## Phase 8: Admin Dashboard
 
 - [ ] 🔴 Admin auth (isAdmin + whitelisted wallets)
-- [ ] 🔴 Dashboard overview (users, guesses, vault status)
-- [ ] 🔴 User management (list, detail, ban, credit)
-- [ ] 🔴 Vault management (view, create, rotate)
-- [ ] 🟡 Task CRUD
-- [ ] 🟡 Audit logs viewer
+- [ ] 🔴 Dashboard overview + user management
+- [ ] 🔴 Vault management (create, rotate)
+- [ ] 🟡 Task CRUD + audit logs viewer
 
 ---
 
 ## Environment Variables
 
 ```env
-DATABASE_URL=                    # PostgreSQL (Supabase)
-DIRECT_URL=                      # Direct connection
-NEXT_PUBLIC_PROJECT_ID=          # Reown AppKit project ID
-NEXTAUTH_SECRET=                 # JWT signing secret (32+ chars)
-VAULT_SECRET_CODE=               # 6-digit secret code
-CRON_SECRET=                     # Vercel Cron auth (optional)
+DATABASE_URL=                      # PostgreSQL (Supabase)
+DIRECT_URL=                        # Direct connection
+NEXT_PUBLIC_PROJECT_ID=            # Reown AppKit project ID
+NEXTAUTH_SECRET=                   # JWT signing secret
+VAULT_SECRET_CODE=                 # 6-digit secret code
+VAULT_SIGNER_PRIVATE_KEY=          # PrizeVault owner key (for on-chain claims)
+CRON_SECRET=                       # Vercel Cron auth
 ```

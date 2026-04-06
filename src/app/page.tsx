@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { AffiliateBanner } from "@/components/AffiliateBanner";
 import { VaultDoor } from "@/components/VaultDoor";
 import { SafeDial } from "@/components/SafeDial";
+import { WalletSelector } from "@/components/WalletSelector";
 import { HeatMeter } from "@/components/HeatMeter";
 import { HintBoard } from "@/components/HintBoard";
 import { GuessHistory } from "@/components/GuessHistory";
@@ -55,6 +56,9 @@ export default function Home() {
 
           {/* Vault visual */}
           <VaultDoor />
+
+          {/* Wallet selector (shown when not connected) */}
+          <WalletSelector />
 
           {/* Dial input */}
           <SafeDial />
