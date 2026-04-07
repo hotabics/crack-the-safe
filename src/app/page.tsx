@@ -5,13 +5,14 @@ import { Header } from "@/components/Header";
 import { AffiliateBanner } from "@/components/AffiliateBanner";
 import { VaultDoor } from "@/components/VaultDoor";
 import { SafeDial } from "@/components/SafeDial";
-import { WalletSelector } from "@/components/WalletSelector";
+import { LoginOptions } from "@/components/LoginOptions";
 import { HeatMeter } from "@/components/HeatMeter";
 import { HintBoard } from "@/components/HintBoard";
 import { GuessHistory } from "@/components/GuessHistory";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { TaskList } from "@/components/TaskList";
 import { HowItWorks } from "@/components/HowItWorks";
+import { QuizGame } from "@/components/QuizGame";
 import { Leaderboard } from "@/components/Leaderboard";
 import { Stats } from "@/components/Stats";
 import { useVaultStore } from "@/stores/vaultStore";
@@ -58,8 +59,8 @@ export default function Home() {
           {/* Vault visual */}
           <VaultDoor />
 
-          {/* Wallet selector (shown when not connected) */}
-          <WalletSelector />
+          {/* Login options (shown when not connected) */}
+          <LoginOptions />
 
           {/* Dial input */}
           <SafeDial />
@@ -77,7 +78,8 @@ export default function Home() {
             <HintBoard />
             <HowItWorks />
           </div>
-          <div>
+          <div className="space-y-6">
+            <QuizGame />
             <TaskList />
           </div>
           <div className="space-y-6">

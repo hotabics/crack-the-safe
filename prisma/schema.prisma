@@ -13,6 +13,10 @@ generator client {
 model User {
   id             String   @id @default(cuid())
   displayName    String
+  email          String?  @unique
+  emailVerified  Boolean  @default(false)
+  authProvider   String?  // "wallet", "email", "google", "apple"
+  avatarUrl      String?
   walletAddress  String?  @unique
   lastLoginDate  String?
   streakDays     Int      @default(0)
@@ -29,6 +33,7 @@ model User {
   crackedVaults      Vault[]            @relation("CrackedBy")
   tokenTransactions  TokenTransaction[]
   auditLogs          AuditLog[]
+  hintUnlocks        HintUnlock[]
 
   @@schema("crack_the_safe")
 }
@@ -135,5 +140,33 @@ model AuditLog {
 
   @@index([action, createdAt])
   @@index([userId, createdAt])
+  @@schema("crack_the_safe")
+}
+
+model QuizQuestion {
+  id           String @id @default(cuid())
+  question     String
+  options      String // JSON array: ["A", "B", "C", "D"]
+  correctIndex Int    // 0-3
+  difficulty   String @default("medium") // "easy", "medium", "hard"
+  category     String @default("general") // "crypto", "math", "general", "riddle"
+  isActive     Boolean @default(true)
+
+  @@schema("crack_the_safe")
+}
+
+model HintUnlock {
+  id           String   @id @default(cuid())
+  userId       String
+  vaultId      String
+  digitIndex   Int      // Which digit position was revealed (0-5)
+  isCorrect    Boolean  // Whether the revealed digit is correct
+  digitValue   String   // The actual digit value revealed
+  earnedVia    String   // "quiz", "purchase", "reward"
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, vaultId, digitIndex])
   @@schema("crack_the_safe")
 }
